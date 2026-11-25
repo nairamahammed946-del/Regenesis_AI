@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" id="html-root">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ReGenesis AI - Enterprise Circular Economy & Industrial Waste Platform</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 6.5.1 CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Google Fonts: Cairo & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet GIS Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            accent: '#06b6d4'
+                        },
+                        dark: {
+                            950: '#070a0f',
+                            900: '#0d131f',
+                            850: '#121a2b',
+                            800: '#182238',
+                            700: '#24324d',
+                            600: '#334466'
+                        }
+                    },
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                        inter: ['Inter', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Cairo', 'Inter', sans-serif;
+            background-color: #070a0f;
+            color: #f3f4f6;
+        }
+        .glass-panel {
+            background: rgba(18, 26, 43, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card {
+            background: rgba(13, 19, 31, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .glow-brand {
+            box-shadow: 0 0 40px -5px rgba(34, 197, 94, 0.25);
+        }
+        .glow-cyan {
+            box-shadow: 0 0 30px -5px rgba(6, 182, 212, 0.25);
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0d131f;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #24324d;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #22c55e;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.94); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.7; }
+        }
+        .glow-pulse {
+            animation: pulseGlow 3s infinite ease-in-out;
+        }
+
+        /* ReGenesis polish layer: preserves the original visual identity */
+        html { scroll-behavior: smooth; }
+        .glass-card, .glass-panel, button, .tab-content > * { transition: transform .24s ease, box-shadow .24s ease, border-color .24s ease, opacity .24s ease; }
+        .glass-card:hover { transform: translateY(-3px); box-shadow: 0 14px 34px rgba(34,197,94,.10); border-color: rgba(34,197,94,.24); }
+        button:hover { transform: translateY(-1px); }
+        .tab-content:not(.hidden) { animation: regenesisEnter .38s cubic-bezier(.2,.8,.2,1) both; }
+        @keyframes regenesisEnter { from { opacity:0; transform:translateY(9px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes regenesisShimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
+        .rg-loading { background:linear-gradient(90deg,rgba(255,255,255,.03),rgba(34,197,94,.13),rgba(255,255,255,.03)); background-size:200% 100%; animation:regenesisShimmer 1.2s infinite; }
+        @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; transition-duration:.01ms !important; scroll-behavior:auto !important; } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-brand-500 selection:text-gray-950">
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="fixed bottom-5 left-5 z-[120] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- ================= 1. AUTHENTICATION & REGISTRATION GATE ================= -->
+    <div id="auth-wall-overlay" class="fixed inset-0 z-[100] bg-dark-950 flex items-center justify-center p-3 sm:p-6 overflow-y-auto">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-brand-950/40 via-dark-950 to-dark-950 pointer-events-none"></div>
+
+        <div class="relative max-w-4xl w-full glass-panel bg-dark-900/95 border border-dark-700 rounded-3xl shadow-2xl overflow-hidden my-auto grid grid-cols-1 lg:grid-cols-12 animate-pop">
+            
+            <!-- Auth Left Info Banner (Enterprise Branding) -->
+            <div class="lg:col-span-5 bg-gradient-to-br from-dark-850 via-dark-900 to-brand-950/60 p-6 sm:p-8 flex flex-col justify-between border-b lg:border-b-0 lg:border-e border-dark-800 relative overflow-hidden">
+                <div class="absolute -right-16 -bottom-16 w-56 h-56 bg-brand-500/10 rounded-full blur-2xl pointer-events-none"></div>
+                
+                <div>
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-dark-950 shadow-lg shadow-brand-500/30">
+                            <i class="fa-solid fa-recycle text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5">
+                                <span class="text-xl font-black text-white">ReGenesis</span>
+                                <span class="px-2 py-0.5 text-xs font-black bg-brand-500/20 text-brand-400 rounded border border-brand-500/30">AI</span>
+                            </div>
+                            <p class="text-[11px] text-gray-400 font-medium" data-i18n="tagline">Turning Industrial Waste into New Resources</p>
+                        </div>
+                    </div>
+
+                    <h2 class="text-xl sm:text-2xl font-black text-white leading-snug mb-3" data-i18n="authLeftTitle">
+                        منظومة الذكاء الاصطناعي الوطنية لإعادة تدوير النفايات الصناعية
+                    </h2>
+                    <p class="text-xs text-gray-300 leading-relaxed mb-6" data-i18n="authLeftDesc">
+                        منصة لتسجيل عروض وطلبات الخامات الصناعية، واستكشاف فرص توافق أولية مع إرشادات فنية وبيئية تحتاج إلى تحقق.
+                    </p>
+
+                    <div class="space-y-3 text-xs text-gray-300">
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-circle-check text-brand-400"></i>
+                            <span data-i18n="authFeat1">مطابقة تفسيرية تعتمد على مواصفات العرض والطلب المسجلة</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-circle-check text-brand-400"></i>
+                            <span data-i18n="authFeat2">اقتراحات أولية لمسارات إعادة الاستخدام ورفع القيمة</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <i class="fa-solid fa-circle-check text-brand-400"></i>
+                            <span data-i18n="authFeat3">مؤشرات بيئية استرشادية وليست شهادات اعتماد</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 pt-4 border-t border-dark-800/80 flex items-center justify-between text-[11px] text-gray-400">
+                    <span>Enterprise Portal v3.4</span>
+                    <button onclick="toggleLanguage()" class="flex items-center gap-1.5 font-bold text-brand-400 hover:underline">
+                        <i class="fa-solid fa-globe"></i>
+                        <span id="lang-label-auth">EN / العربية</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Auth Right Forms -->
+            <div class="lg:col-span-7 p-6 sm:p-8 space-y-5">
+                
+                <!-- Auth Tabs Switcher -->
+                <div class="flex bg-dark-950 p-1 rounded-2xl border border-dark-800">
+                    <button type="button" onclick="switchAuthTab('signup')" id="auth-tab-signup" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all bg-brand-500 text-dark-950 shadow-md">
+                        <i class="fa-solid fa-user-plus me-1.5"></i> <span data-i18n="tabSignup">تسجيل منشأة جديدة</span>
+                    </button>
+                    <button type="button" onclick="switchAuthTab('login')" id="auth-tab-login" class="flex-1 py-2.5 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white">
+                        <i class="fa-solid fa-right-to-bracket me-1.5"></i> <span data-i18n="tabLogin">تسجيل الدخول</span>
+                    </button>
+                </div>
+
+                <!-- STEP 1: AUTH FORM -->
+                <form id="authWallForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                    <input type="hidden" id="auth-mode" value="signup">
+
+                    <!-- Signup Dynamic Fields -->
+                    <div id="signup-fields-group" class="space-y-3.5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-300 mb-1" data-i18n="lblFullName">الاسم بالكامل ومسمى المسؤول *</label>
+                                <input type="text" id="auth-fullname" placeholder="م. أحمد محمود - مدير الاستدامة" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-300 mb-1" data-i18n="lblCompany">اسم المصنع / الشركة *</label>
+                                <input type="text" id="auth-company" placeholder="شركة مصر للصناعات المتكاملة" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-300 mb-1" data-i18n="lblRole">نوع النشاط في المنظومة *</label>
+                                <select id="auth-role" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                                    <option value="Waste Producer">مُنتِج ومورّد للمخلفات (Producer)</option>
+                                    <option value="Raw Material Buyer">مستهلك ومشتري خامات (Consumer)</option>
+                                    <option value="Recycler">شركة تدوير ومعالجة (Recycler)</option>
+                                    <option value="R&D Lab">مركز أبحاث واختبارات (R&D)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-300 mb-1" data-i18n="lblSector">القطاع الصناعي *</label>
+                                <select id="auth-sector" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-2.5 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                                    <option value="خشب">خشب ونشارة ومواد سيليولوزية</option>
+                                    <option value="بلاستيك">بلاستيك وبوليمرات (PET, HDPE, PVC)</option>
+                                    <option value="معادن">معادن وفلزات (ألومنيوم، حديد، نحاس)</option>
+                                    <option value="مواد كيميائية">سوائل ومواد كيميائية صناعية</option>
+                                    <option value="نسيج">منسوجات وألياف قطنية</option>
+                                    <option value="زجاج">زجاج ومواد سيراميك</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-300 mb-1" data-i18n="lblCity">المنطقة الصناعية / المدينة *</label>
+                            <input type="text" id="auth-city" placeholder="مدينة دمياط للأثاث / العاشر من رمضان" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Phone Input -->
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-300 mb-1" data-i18n="lblPhone">رقم الجوال المؤكد لتلقي SMS OTP *</label>
+                        <div class="flex gap-2 dir-ltr">
+                            <select id="auth-country-code" class="bg-dark-950 border border-dark-700 rounded-xl px-2 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                                <option value="+20">🇪🇬 +20</option>
+                                <option value="+966">🇸🇦 +966</option>
+                                <option value="+971">🇦🇪 +971</option>
+                                <option value="+1">🇺🇸 +1</option>
+                            </select>
+                            <input type="tel" id="auth-phone" placeholder="1012345678" pattern="[0-9]{8,12}" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Email & Password -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-300 mb-1" data-i18n="lblEmail">البريد المؤسسي الرسمي *</label>
+                            <input type="email" id="auth-email" required placeholder="manager@factory.com" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-300 mb-1" data-i18n="lblPassword">كلمة المرور المشفرة *</label>
+                            <input type="password" id="auth-password" oninput="evalPassStrength(this.value)" required placeholder="••••••••" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+                    </div>
+
+                    <!-- Password Strength -->
+                    <div class="space-y-1">
+                        <div class="h-1.5 w-full bg-dark-950 rounded-full overflow-hidden flex border border-dark-800">
+                            <div id="pass-meter" class="h-full w-0 transition-all duration-300 bg-red-500"></div>
+                        </div>
+                        <div class="flex justify-between items-center text-[10px] text-gray-400">
+                            <span data-i18n="lblStrength">مستوى تشفير الحساب:</span>
+                            <span id="pass-strength-label" class="font-bold text-gray-500">-</span>
+                        </div>
+                    </div>
+
+                    <div id="terms-box" class="flex items-center gap-2 text-xs text-gray-400 pt-1">
+                        <input type="checkbox" id="auth-terms" required class="rounded bg-dark-950 border-dark-700 text-brand-500 focus:ring-0">
+                        <label for="auth-terms" data-i18n="lblTerms">أوافق على شروط تداول المواد ومعايير الحفاظ على البيئة ESG</label>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-brand-600 to-brand-400 hover:from-brand-500 hover:to-brand-300 text-dark-950 font-black py-3 rounded-xl text-xs transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2 mt-2">
+                        <i class="fa-solid fa-paper-plane text-xs"></i>
+                        <span id="auth-submit-btn-text" data-i18n="btnSendOtp">إنشاء الحساب</span>
+                    </button>
+                    <button type="button" onclick="enterDemoMode()" class="w-full border border-brand-500/40 bg-brand-500/10 hover:bg-brand-500/20 text-brand-300 font-bold py-3 rounded-xl text-xs transition-all">
+                        <i class="fa-solid fa-eye me-1"></i> الدخول لتجربة العرض بدون إنشاء حساب
+                    </button>
+                    <p class="text-[10px] text-gray-500 text-center">وضع العرض يتيح التصفح والاستشارة وتحليل الصور؛ لا ينفّذ عمليات شراء أو تعاقد حقيقية.</p>
+                </form>
+
+                <!-- STEP 2: OTP VERIFICATION FORM -->
+                <form id="otpForm" onsubmit="handleOtpSubmit(event)" class="space-y-5 hidden">
+                    <div class="bg-dark-950 p-4 rounded-2xl border border-dark-800 text-center space-y-1">
+                        <p class="text-xs text-gray-400" data-i18n="otpMsg">تم إرسال كود التفعيل المكون من 4 أرقام عبر SMS إلى:</p>
+                        <p class="text-sm font-black text-brand-400 dir-ltr" id="otp-phone-num">+20 1012345678</p>
+                    </div>
+
+                    <div class="flex justify-center gap-3 dir-ltr">
+                        <input type="text" maxlength="1" required class="otp-digit w-12 h-14 bg-dark-950 border border-dark-700 rounded-xl text-center text-xl font-bold text-white focus:border-brand-500 focus:outline-none">
+                        <input type="text" maxlength="1" required class="otp-digit w-12 h-14 bg-dark-950 border border-dark-700 rounded-xl text-center text-xl font-bold text-white focus:border-brand-500 focus:outline-none">
+                        <input type="text" maxlength="1" required class="otp-digit w-12 h-14 bg-dark-950 border border-dark-700 rounded-xl text-center text-xl font-bold text-white focus:border-brand-500 focus:outline-none">
+                        <input type="text" maxlength="1" required class="otp-digit w-12 h-14 bg-dark-950 border border-dark-700 rounded-xl text-center text-xl font-bold text-white focus:border-brand-500 focus:outline-none">
+                    </div>
+                    <p class="text-[11px] text-center text-gray-500" data-i18n="otpHint">💡 أدخل أي 4 أرقام (مثال: 1 2 3 4) للدخول الفوري للتطبيق</p>
+
+                    <div class="flex gap-3">
+                        <button type="button" onclick="backToAuthForm()" class="w-1/3 bg-dark-800 hover:bg-dark-700 text-gray-300 font-bold py-3 rounded-xl text-xs transition-all" data-i18n="btnEdit">تعديل</button>
+                        <button type="submit" class="w-2/3 bg-gradient-to-r from-brand-600 to-brand-400 text-dark-950 font-black py-3 rounded-xl text-xs transition-all shadow-lg shadow-brand-500/20" data-i18n="btnVerify">تأكيد ودخول المنظومة</button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-dark-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                
+                <!-- Brand Logo -->
+                <div class="flex items-center gap-3 cursor-pointer" onclick="switchTab('dashboard')">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-brand-600 to-brand-400 flex items-center justify-center text-dark-950 shadow-lg shadow-brand-500/20">
+                        <i class="fa-solid fa-recycle text-xl"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xl font-black tracking-tight text-white">ReGenesis</span>
+                            <span class="px-2 py-0.5 text-xs font-black bg-brand-500/20 text-brand-400 rounded border border-brand-500/30">AI</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 font-medium" data-i18n="tagline">Turning Industrial Waste into New Resources</p>
+                    </div>
+                </div>
+
+                <!-- Navigation Bar -->
+                <nav class="hidden lg:flex items-center gap-1 bg-dark-950/70 p-1.5 rounded-2xl border border-dark-800">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-brand-400 bg-brand-500/10 border border-brand-500/20">
+                        <i class="fa-solid fa-chart-pie"></i> <span data-i18n="navDashboard">لوحة التحكم</span>
+                    </button>
+                    <button onclick="switchTab('add-waste')" id="nav-add-waste" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-gray-400 hover:text-white hover:bg-dark-800">
+                        <i class="fa-solid fa-circle-plus"></i> <span data-i18n="navAddWaste">إضافة خامة</span>
+                    </button>
+                    <button onclick="switchTab('marketplace')" id="nav-marketplace" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-gray-400 hover:text-white hover:bg-dark-800">
+                        <i class="fa-solid fa-store"></i> <span data-i18n="navMarket">سوق الخامات</span>
+                    </button>
+                    <button onclick="switchTab('upcycle-roadmap')" id="nav-upcycle-roadmap" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-gray-400 hover:text-white hover:bg-dark-800">
+                        <i class="fa-solid fa-route text-brand-400"></i> <span data-i18n="navRoadmap">مسارات الـ Upcycling</span>
+                    </button>
+                    <button onclick="switchTab('esg-calculator')" id="nav-esg-calculator" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-gray-400 hover:text-white hover:bg-dark-800">
+                        <i class="fa-solid fa-award text-cyan-400"></i> <span data-i18n="navEsg">تقرير الكربون ESG</span>
+                    </button>
+                    <button onclick="switchTab('matching')" id="nav-matching" class="tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-gray-400 hover:text-white hover:bg-dark-800">
+                        <i class="fa-solid fa-bolt text-amber-400"></i> <span data-i18n="navMatching">المطابقة اللحظية</span>
+                    </button>
+                </nav>
+
+                <!-- Actions & Profile -->
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleLanguage()" class="flex items-center gap-2 glass-card hover:bg-dark-800 text-gray-300 font-bold px-3 py-2 rounded-xl text-xs border border-dark-700 transition-all">
+                        <i class="fa-solid fa-globe text-brand-400"></i>
+                        <span id="lang-label">EN / العربية</span>
+                    </button>
+
+                    <div id="auth-header-area">
+                        <!-- Dynamic profile badge inserted here -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Mobile sub-navigation -->
+        <div class="lg:hidden flex overflow-x-auto px-4 py-2 space-x-2 rtl:space-x-reverse border-t border-dark-800 bg-dark-900/95 text-xs font-bold">
+            <button onclick="switchTab('dashboard')" class="mobile-tab px-3 py-1.5 rounded-lg whitespace-nowrap bg-brand-500/20 text-brand-400" data-i18n="navDashboard">لوحة التحكم</button>
+            <button onclick="switchTab('add-waste')" class="mobile-tab px-3 py-1.5 rounded-lg whitespace-nowrap text-gray-400" data-i18n="navAddWaste">إضافة خامة</button>
+            <button onclick="switchTab('marketplace')" class="mobile-tab px-3 py-1.5 rounded-lg whitespace-nowrap text-gray-400" data-i18n="navMarket">سوق الخامات</button>
+            <button onclick="switchTab('upcycle-roadmap')" class="mobile-tab px-3 py-1.5 rounded-lg whitespace-nowrap text-gray-400" data-i18n="navRoadmap">مسارات الـ Upcycling</button>
+            <button onclick="switchTab('esg-calculator')" class="mobile-tab px-3 py-1.5 rounded-lg whitespace-nowrap text-gray-400" data-i18n="navEsg">تقرير ESG</button>
+            <button onclick="switchTab('matching')" class="mobile-tab px-3 py-1.5 rounded-lg whitespace-nowrap text-gray-400" data-i18n="navMatching">المطابقة اللحظية</button>
+        </div>
+    </header>
+
+    <!-- MAIN BODY CONTENT AREA -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ================= TAB 1: DASHBOARD ================= -->
+        <section id="tab-dashboard" class="tab-content space-y-8">
+            <!-- Hero Banner -->
+            <div class="relative overflow-hidden rounded-3xl glass-panel p-8 sm:p-10 border border-brand-500/20 glow-brand">
+                <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="relative z-10 max-w-3xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 text-xs font-bold mb-4">
+                        <i class="fa-solid fa-microchip"></i> <span data-i18n="dashBadge">منظومة الاقتصاد الدائري والذكاء الاصطناعي B2B</span>
+                    </div>
+                    <h1 class="text-3xl sm:text-4xl lg:text-5xl font-black text-white leading-tight mb-4" data-i18n="dashTitle">
+                        تحويل النفايات الصناعية إلى <span class="text-transparent bg-clip-text bg-gradient-to-l from-brand-400 via-emerald-300 to-brand-500">خامات ثانوية وموارد ذات قيمة</span>
+                    </h1>
+                    <p class="text-gray-300 text-sm sm:text-base mb-8 leading-relaxed" data-i18n="dashDesc">
+                        تسجيل عروض المخلفات وطلبات الخامات، واستكشاف فرص توافق أولية واقتراح مسارات معالجة تحتاج إلى فحص فني ومعملي قبل التنفيذ.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button onclick="switchTab('add-waste')" class="bg-gradient-to-r from-brand-600 to-brand-400 hover:from-brand-500 hover:to-brand-300 text-dark-950 font-black px-6 py-3 rounded-xl transition-all shadow-lg shadow-brand-500/25 flex items-center gap-2 text-xs sm:text-sm">
+                            <i class="fa-solid fa-plus-circle"></i> <span data-i18n="btnAddNewWaste">إضافة مخلفات ومطابقتها فوراً</span>
+                        </button>
+                        <button onclick="toggleChatbot()" class="glass-card hover:bg-dark-800 text-white font-bold px-6 py-3 rounded-xl border border-dark-700 transition-all flex items-center gap-2 text-xs sm:text-sm">
+                            <i class="fa-solid fa-robot text-brand-400"></i> <span data-i18n="btnRunAiBot">استشارة المساعد الذكي ReGenesis AI</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Analytics KPIs -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div class="glass-card p-6 rounded-2xl border-s-4 border-s-brand-500 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 font-bold mb-1" data-i18n="kpi1Title">إجمالي المخلفات المسجلة</p>
+                        <h3 class="text-3xl font-black text-white" id="kpi-waste-val">0 <span class="text-xs font-normal text-gray-400" data-i18n="unitTons">طن</span></h3>
+                        <span class="text-[11px] text-brand-400 font-bold flex items-center gap-1 mt-2">
+                            <i class="fa-solid fa-arrow-up"></i> <span data-i18n="kpi1Sub">إجمالي الكميات في الإعلانات المسجلة</span>
+                        </span>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-400 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-boxes-packing"></i>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl border-s-4 border-s-emerald-400 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 font-bold mb-1" data-i18n="kpi2Title">فرص مطابقة أولية</p>
+                        <h3 class="text-3xl font-black text-white" id="kpi-matches-val">0 <span class="text-xs font-normal text-gray-400" data-i18n="unitDeals">عقد</span></h3>
+                        <span class="text-[11px] text-emerald-400 font-bold flex items-center gap-1 mt-2">
+                            <i class="fa-solid fa-circle-check"></i> <span data-i18n="kpi2Sub">لا توجد صفقات مؤكدة مسجلة</span>
+                        </span>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-bolt"></i>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl border-s-4 border-s-cyan-400 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 font-bold mb-1" data-i18n="kpi3Title">انبعاثات متجنبة موثقة</p>
+                        <h3 class="text-3xl font-black text-white" id="kpi-co2-val">0 <span class="text-xs font-normal text-gray-400" data-i18n="unitTons">طن CO2</span></h3>
+                        <span class="text-[11px] text-cyan-400 font-bold flex items-center gap-1 mt-2">
+                            <i class="fa-solid fa-leaf"></i> <span data-i18n="kpi3Sub">لا توجد صفقات مكتملة موثقة بعد</span>
+                        </span>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-smog"></i>
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl border-s-4 border-s-amber-400 flex items-center justify-between">
+                    <div>
+                        <p class="text-xs text-gray-400 font-bold mb-1" data-i18n="kpi4Title">قيمة إعلانات السوق التجريبية مجتمعة</p>
+                        <h3 class="text-3xl font-black text-white" id="kpi-value-val">0 EGP</h3>
+                        <span class="text-[11px] text-amber-400 font-bold flex items-center gap-1 mt-2">
+                            <i class="fa-solid fa-hand-holding-dollar"></i> <span data-i18n="kpi4Sub">مجموع حسابي للعروض والطلبات وليس قيمة صفقات</span>
+                        </span>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-2xl">
+                        <i class="fa-solid fa-chart-line-up"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Analytics Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="glass-panel p-6 rounded-3xl border border-dark-800">
+                    <h4 class="text-base font-bold text-white mb-4 flex items-center justify-between">
+                        <span data-i18n="chart1">توزيع الخامات حسب التصنيف الصناعي</span>
+                        <i class="fa-solid fa-chart-pie text-brand-400"></i>
+                    </h4>
+                    <div class="relative h-60 flex items-center justify-center">
+                        <canvas id="wastePieChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-6 rounded-3xl border border-dark-800 lg:col-span-2">
+                    <h4 class="text-base font-bold text-white mb-4 flex items-center justify-between">
+                        <span data-i18n="chart2">مقارنة العروض والطلبات الحالية (لقطة من قاعدة البيانات)</span>
+                        <i class="fa-solid fa-chart-line text-brand-400"></i>
+                    </h4>
+                    <div class="relative h-60">
+                        <canvas id="tradesLineChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent B2B Listings Table -->
+            <div class="glass-panel p-6 rounded-3xl border border-dark-800 space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-bold text-white" data-i18n="tableTitle">أحدث العروض والطلبات المسجلة</h3>
+                        <p class="text-xs text-gray-400" data-i18n="tableSub">سجلات مستخدم أو سيناريوهات عرض؛ تحقق قبل التعامل</p>
+                    </div>
+                    <button onclick="switchTab('marketplace')" class="text-brand-400 hover:underline text-xs font-bold flex items-center gap-1">
+                        <span data-i18n="btnViewAll">استعراض السوق بالكامل</span>
+                        <i class="fa-solid fa-arrow-left rtl:rotate-180"></i>
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="w-full text-start text-xs">
+                        <thead class="bg-dark-950 text-gray-400 border-b border-dark-800">
+                            <tr>
+                                <th class="p-3.5 rounded-s-xl" data-i18n="thMaterial">نوع المادة والكمية</th>
+                                <th class="p-3.5" data-i18n="thEntity">اسم المصنع والمنطقة</th>
+                                <th class="p-3.5" data-i18n="thTrade">نوع الإعلان والسعر</th>
+                                <th class="p-3.5" data-i18n="thPurity">نسبة النقاء</th>
+                                <th class="p-3.5" data-i18n="thAiMatch">توافق المطابقة AI</th>
+                                <th class="p-3.5 rounded-e-xl" data-i18n="thAction">التفاوض</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dashboard-recent-table" class="divide-y divide-dark-800/60 text-gray-200">
+                            <!-- JS Populated -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 2: ADD WASTE & AI MATCHING INPUT ================= -->
+        <section id="tab-add-waste" class="tab-content hidden space-y-8">
+            <div class="max-w-3xl mx-auto glass-panel p-8 rounded-3xl border border-dark-800 shadow-2xl">
+                <div class="border-b border-dark-800 pb-5 mb-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 text-xs font-bold mb-2">
+                        <i class="fa-solid fa-bolt"></i> <span data-i18n="formBadge">إدخال البيانات والمطابقة اللحظية</span>
+                    </div>
+                    <h2 class="text-2xl font-black text-white" data-i18n="formTitle">إضافة مخلفات أو طلب خامات جديدة</h2>
+                    <p class="text-xs text-gray-400 mt-1" data-i18n="formSub">بمجرد الحفظ، تقوم خوارزمية الذكاء الاصطناعي بمطابقة البيانات مع طلبات المصانع المحتملة فوراً.</p>
+                </div>
+
+                <form id="addWasteForm" onsubmit="handleWasteSubmit(event)" class="space-y-5">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-300 mb-1.5" data-i18n="fldTitle">اسم الخامة أو وصف المادة *</label>
+                            <input type="text" id="w-title" required placeholder="مثال: نشارة خشب زان ناعمة جافة خالية من الأتربة" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1.5" data-i18n="fldCat">التصنيف الصناعي *</label>
+                            <select id="w-category" required class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+                                <option value="خشب">خشب ونشارة (Wood & Cellulose)</option>
+                                <option value="بلاستيك">بلاستيك وبوليمرات (PET, HDPE, PVC)</option>
+                                <option value="معادن">معادن وفلزات (Aluminum, Steel, Copper)</option>
+                                <option value="مواد كيميائية">سوائل ومواد كيميائية (Chemical Waste)</option>
+                                <option value="زجاج">زجاج وسيراميك (Glass & Ceramics)</option>
+                                <option value="نسيج">أقمشة وغزل ونسيج (Textiles)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1.5" data-i18n="fldType">نوع الإعلان *</label>
+                            <select id="w-trade-type" required class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+                                <option value="عرض (توفر مخلفات)">عرض (لدينا مخلفات نود بيعها/التخلص منها)</option>
+                                <option value="طلب (احتياج خامة)">طلب (مصنعنا محتاج الخامة دي للإنتاج)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1.5" data-i18n="fldQty">الكمية المتاحة (بالطن) *</label>
+                            <input type="number" step="0.5" id="w-qty" required placeholder="25" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1.5" data-i18n="fldPurity">نسبة النقاء المعلنة أو نتيجة الفحص (%) *</label>
+                            <input type="number" id="w-purity" min="1" max="100" value="92" placeholder="92" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1.5" data-i18n="fldPrice">السعر التقديري (دولار/طن)</label>
+                            <input type="number" id="w-price" placeholder="45" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-300 mb-1.5" data-i18n="fldCity">المدينة / المنطقة الصناعية *</label>
+                            <input type="text" id="w-city" required placeholder="مدينة دمياط للأثاث" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-gray-300 mb-1.5" data-i18n="fldDesc">مواصفات الخامة ونتائج الفحص المعملي</label>
+                            <textarea id="w-desc" rows="3" placeholder="أدخل تفاصيل نسبة الرطوبة، الكثافة، أو المعالجة المسبقة..." class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none"></textarea>
+                        </div>
+                        <div class="md:col-span-2 rounded-2xl border border-dashed border-brand-500/40 bg-dark-950/60 p-4">
+                            <label class="block text-xs font-bold text-gray-200 mb-2"><i class="fa-solid fa-images text-brand-400 me-1"></i> صور المخلفات (حتى 6 صور)</label>
+                            <input type="file" id="w-images" accept="image/jpeg,image/png,image/webp,image/bmp" multiple class="block w-full text-xs text-gray-300 file:me-3 file:rounded-lg file:border-0 file:bg-brand-500 file:px-3 file:py-2 file:font-bold file:text-dark-950" onchange="previewWasteImages(this)">
+                            <p id="w-images-preview" class="text-[10px] text-gray-500 mt-2">ارفع صوراً واضحة من زوايا مختلفة؛ لا تضع معلومات سرية داخل الصورة.</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 flex justify-end gap-3 border-t border-dark-800">
+                        <button type="button" onclick="switchTab('marketplace')" class="px-5 py-2.5 rounded-xl border border-dark-700 text-gray-400 font-bold hover:bg-dark-800 text-xs transition-all" data-i18n="btnCancel">إلغاء</button>
+                        <button type="submit" class="bg-gradient-to-r from-brand-600 to-brand-400 hover:from-brand-500 hover:to-brand-300 text-dark-950 font-black px-7 py-2.5 rounded-xl text-xs transition-all shadow-lg shadow-brand-500/20 flex items-center gap-2">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span data-i18n="btnSubmitAndMatch">حفظ وتشغيل خوارزمية المطابقة التلقائية</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- ================= TAB 3: MARKETPLACE ================= -->
+        <section id="tab-marketplace" class="tab-content hidden space-y-6">
+            <div class="glass-panel p-6 rounded-3xl border border-dark-800 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-white" data-i18n="mktTitle">سوق الخامات والمخلفات الصناعية B2B</h2>
+                    <p class="text-xs text-gray-400" data-i18n="mktSub">تصفح فلترة العروض والطلبات الفورية المباشرة بين المصانع</p>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <div class="relative flex-grow md:w-60">
+                        <i class="fa-solid fa-magnifying-glass absolute start-3 top-3 text-gray-500 text-xs"></i>
+                        <input type="text" id="mkt-search" oninput="renderMarketplace()" placeholder="بحث باسم الخامة أو المصنع..." class="w-full bg-dark-950 border border-dark-700 rounded-xl ps-9 pe-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                    </div>
+
+                    <select id="mkt-cat" onchange="renderMarketplace()" class="bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        <option value="ALL" data-i18n="optAllCats">جميع القطاعات</option>
+                        <option value="خشب">خشب</option>
+                        <option value="بلاستيك">بلاستيك</option>
+                        <option value="معادن">معادن</option>
+                        <option value="مواد كيميائية">مواد كيميائية</option>
+                        <option value="زجاج">زجاج</option>
+                        <option value="نسيج">نسيج</option>
+                    </select>
+
+                    <select id="mkt-type" onchange="renderMarketplace()" class="bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                        <option value="ALL" data-i18n="optAllTypes">كل الإعلانات</option>
+                        <option value="عرض (توفر مخلفات)" data-i18n="optOffers">عروض توفر المخلفات</option>
+                        <option value="طلب (احتياج خامة)" data-i18n="optRequests">طلبات احتياج خامات</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="rounded-2xl border border-amber-500/25 bg-amber-500/5 p-3 text-[11px] leading-relaxed text-amber-200">
+                <i class="fa-solid fa-circle-info me-1"></i>
+                بيانات النسخة الحالية تتضمن سيناريوهات محاكاة للعرض؛ الأسعار توضيحية بالجنيه/طن والصور مولّدة للتوضيح وليست صور شحنات حقيقية. سجلات دليل المصانع العامة غير متحققة ولا تعني وجود تعاقد أو عرض نشط.
+            </div>
+            <div id="marketplace-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards inserted by JS -->
+            </div>
+        </section>
+
+        <!-- ================= TAB 4: UPCYCLING ROADMAP SIMULATOR ================= -->
+        <section id="tab-upcycle-roadmap" class="tab-content hidden space-y-8">
+            <div class="glass-panel p-8 rounded-3xl border border-brand-500/30 glow-brand">
+                <div class="max-w-3xl mb-6">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/20 text-xs font-bold mb-2">
+                        <i class="fa-solid fa-route"></i> Industrial Upcycling Engine
+                    </div>
+                    <h2 class="text-2xl font-black text-white" data-i18n="roadmapHeader">محاكي مسارات المعالجة والرفع من القيمة (Upcycling Roadmap)</h2>
+                    <p class="text-xs text-gray-300 mt-1 leading-relaxed" data-i18n="roadmapSub">خطوات التحويل الكيميائي والفيزيائي والمعدات المطلوبة لتحويل النفايات الصناعية لمنتجات جديدة بأعلى قيمة اقتصادية.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="md:col-span-2">
+                        <label class="block text-xs font-bold text-gray-400 mb-1.5" data-i18n="lblRoadmapSelect">اختر خامة النفايات للمعاينة التفصيلية:</label>
+                        <select id="roadmap-preset-select" onchange="renderRoadmap()" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-4 py-2.5 text-xs text-white focus:border-brand-500 focus:outline-none">
+                            <option value="wood">نشارة خشب وبقايا ورش (Beech Sawdust 🪵)</option>
+                            <option value="pet">عبوات وبوليمرات بلاستيك PET شفاف (Shredded Plastics 🥤)</option>
+                            <option value="aluminum">خراطة وفضلات ألومنيوم 6063 (Aluminum Scrap ⚙️)</option>
+                            <option value="textile">قصاصات وألياف نسيج قطنية (Cotton Textiles 🧵)</option>
+                        </select>
+                    </div>
+
+                    <div class="flex items-end">
+                        <button onclick="renderRoadmap()" class="w-full bg-gradient-to-r from-brand-600 to-brand-400 text-dark-950 font-black py-2.5 px-5 rounded-xl text-xs transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand-500/20">
+                            <i class="fa-solid fa-sliders"></i>
+                            <span data-i18n="btnSimulate">تحديث محاكاة خط الإنتاج</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="roadmap-output-container" class="space-y-6 pt-4 border-t border-dark-800">
+                    <!-- Populated via JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 5: ESG & CARBON AUDIT CALCULATOR ================= -->
+        <section id="tab-esg-calculator" class="tab-content hidden space-y-8">
+            <div class="glass-panel p-8 rounded-3xl border border-cyan-500/30 glow-cyan">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 text-xs font-bold mb-2">
+                            <i class="fa-solid fa-leaf"></i> Indicative Scenario Only · Not an Audit
+                        </div>
+                        <h2 class="text-2xl font-black text-white" data-i18n="esgHeader">حاسبة تقديرية للأثر البيئي (ليست شهادة ESG)</h2>
+                        <p class="text-xs text-gray-300 mt-1" data-i18n="esgSub">حساب أولي باستخدام معاملات افتراضية؛ لا يمثل تدقيقاً أو شهادة خفض انبعاثات.</p>
+                    </div>
+
+                    <button onclick="generateEsgCertificate()" class="bg-gradient-to-r from-cyan-500 to-emerald-400 text-dark-950 font-black px-5 py-2.5 rounded-xl text-xs shadow-lg shadow-cyan-500/20 flex items-center gap-2">
+                        <i class="fa-solid fa-file-lines"></i> <span data-i18n="btnExportCert">عرض تقدير بيئي أولي</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card p-5 rounded-2xl border border-dark-800 space-y-4">
+                        <h4 class="text-xs font-bold text-gray-300" data-i18n="esgCalcFormTitle">مدخلات حساب الأثر البيئي</h4>
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1" data-i18n="esgMaterialLabel">نوع المادة الكيميائية/الخامة</label>
+                            <select id="esg-mat-type" onchange="recalcESG()" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white">
+                                <option value="خشب">خشب ونشارة</option>
+                                <option value="بلاستيك">بلاستيك وبوليمرات</option>
+                                <option value="معادن">معادن وألومنيوم</option>
+                                <option value="نسيج">منسوجات</option>
+                                <option value="زجاج">زجاج</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1">معامل الأثر المعتمد (طن CO2 لكل طن خام) — اختياري</label>
+                            <input type="number" min="0" step="0.001" id="esg-factor" placeholder="أدخل معاملًا موثقًا من منهجيتك" oninput="recalcESG()" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] text-gray-400 mb-1" data-i18n="esgTonnageLabel">الكمية محل السيناريو (طن)</label>
+                            <input type="number" id="esg-tonnage" value="50" oninput="recalcESG()" class="w-full bg-dark-950 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white">
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 glass-card p-6 rounded-2xl border border-dark-800 flex flex-col justify-between space-y-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 text-center">
+                            <div class="bg-dark-950 p-4 rounded-xl border border-dark-800">
+                                <span class="text-[11px] text-gray-400 block mb-1" data-i18n="esgRes1">نتيجة سيناريو CO2 (غير معتمدة)</span>
+                                <h3 id="esg-val-co2" class="text-lg font-black text-cyan-400">غير محسوب</h3>
+                            </div>
+                            <div class="bg-dark-950 p-4 rounded-xl border border-dark-800">
+                                <span class="text-[11px] text-gray-400 block mb-1" data-i18n="esgRes2">مكافئ الأشجار (غير محسوب)</span>
+                                <h3 id="esg-val-trees" class="text-base font-black text-brand-400">غير متاح</h3>
+                            </div>
+                            <div class="bg-dark-950 p-4 rounded-xl border border-dark-800 col-span-2 sm:col-span-1">
+                                <span class="text-[11px] text-gray-400 block mb-1" data-i18n="esgRes3">حالة التقييم البيئي</span>
+                                <h3 id="esg-val-score" class="text-base font-black text-amber-400">يتطلب منهجية</h3>
+                            </div>
+                        </div>
+
+                        <!-- Certificate Preview Modal Display -->
+                        <div id="cert-preview-box" class="bg-dark-950 p-5 rounded-2xl border border-cyan-500/40 space-y-3 relative overflow-hidden">
+                            <div class="flex justify-between items-center border-b border-dark-800 pb-2">
+                                <span class="text-[11px] text-cyan-400 font-mono font-bold">PREVIEW ONLY · NOT A CERTIFICATE</span>
+                                <span class="text-[10px] text-gray-500" id="cert-date">Not issued</span>
+                            </div>
+                            <h4 class="text-sm font-black text-white text-center">معاينة تقدير بيئي — ليست شهادة اعتماد</h4>
+                            <p class="text-[11px] text-gray-300 text-center leading-relaxed" id="cert-text-body">
+                                لم يتم احتساب أثر كربوني؛ يلزم تحديد حدود النظام ومعامل موثق ومصدر بيانات معتمد قبل أي تقدير.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= TAB 6: SMART MATCHING ENGINE ================= -->
+        <section id="tab-matching" class="tab-content hidden space-y-8">
+            <div class="glass-panel p-8 rounded-3xl border border-dark-800 space-y-6">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20 text-xs font-bold mb-2">
+                        <i class="fa-solid fa-bolt"></i> Real-time Matching Algorithm
+                    </div>
+                    <h2 class="text-2xl font-black text-white" data-i18n="matchTitle">خوارزمية المطابقة التلقائية بين المورد والمشتري</h2>
+                    <p class="text-xs text-gray-400 mt-1" data-i18n="matchSub">حساب الربط اللحظي بناءً على الموقع الجغرافي، كمية التوريد، ونسبة النقاء الكيميائي.</p>
+                </div>
+
+                <div id="active-top-match-card" class="glass-card p-6 rounded-2xl border border-brand-500/40 relative overflow-hidden space-y-6">
+                    <!-- Dynamic Match Pair inserted by JS -->
+                </div>
+
+                <div class="space-y-4">
+                    <h3 class="text-base font-bold text-white" data-i18n="matchListTitle">فرص التوافق النشطة حالياً في المنظومة</h3>
+                    <div id="matching-list-container" class="space-y-4">
+                        <!-- Dynamic Pairs inserted by JS -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="glass-panel border-t border-dark-800 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-leaf text-brand-400"></i>
+                <span class="text-xs font-bold text-gray-400" data-i18n="footerRights">ReGenesis AI Enterprise &copy; 2026 - جميع الحقوق محفوظة</span>
+            </div>
+            <p class="text-[11px] text-gray-500 font-mono">"Waste is not the end. It's the beginning of a new resource."</p>
+        </div>
+    </footer>
+
+    <!-- ================= 2. FLOATING INTEGRATED AI CHATBOT (ReGenesis Core AI) ================= -->
+    <div id="chatbot-wrapper" class="fixed bottom-6 end-6 z-50 flex flex-col items-end">
+        <!-- Floating Toggle Trigger Button -->
+        <button onclick="toggleChatbot()" id="chatbot-toggle-btn" class="bg-gradient-to-tr from-brand-600 via-brand-500 to-emerald-400 text-dark-950 p-4 rounded-full shadow-2xl shadow-brand-500/40 hover:scale-105 transition-all flex items-center justify-center gap-2 font-black text-sm glow-brand">
+            <i class="fa-solid fa-robot text-xl"></i>
+            <span class="hidden sm:inline" data-i18n="btnBotLabel">مساعد ReGenesis AI</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-dark-950 animate-ping"></span>
+        </button>
+
+        <!-- Chatbot Window Box -->
+        <div id="chatbot-window" class="hidden mt-3 w-[92vw] sm:w-[420px] h-[540px] glass-panel bg-dark-900/95 border border-brand-500/40 rounded-3xl shadow-2xl flex flex-col overflow-hidden animate-pop">
+            <!-- Header -->
+            <div class="bg-dark-950 p-4 border-b border-dark-800 flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-white">ReGenesis Core AI Advisor</h4>
+                        <span class="text-[10px] text-brand-400 flex items-center gap-1">
+                            <span id="rg-ai-state-dot" class="w-1.5 h-1.5 rounded-full bg-brand-400 animate-pulse"></span> <span id="rg-ai-state-label">Local AI status checking...</span>
+                        </span>
+                    </div>
+                </div>
+                <button onclick="toggleChatbot()" class="text-gray-400 hover:text-white text-sm">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Quick Prompt Chips -->
+            <div class="p-2.5 bg-dark-950/60 border-b border-dark-800/80 flex overflow-x-auto gap-2 text-[10px] font-bold">
+                <button onclick="sendQuickPrompt('كيف يمكن الاستفادة من نشارة الخشب؟')" class="px-2.5 py-1 bg-dark-800 hover:bg-brand-500/20 hover:text-brand-400 text-gray-300 rounded-lg whitespace-nowrap border border-dark-700 transition-all">
+                    🪵 Upcycle Sawdust
+                </button>
+                <button onclick="sendQuickPrompt('ابحث عن مشترين للبلاستيك PET')" class="px-2.5 py-1 bg-dark-800 hover:bg-cyan-500/20 hover:text-cyan-400 text-gray-300 rounded-lg whitespace-nowrap border border-dark-700 transition-all">
+                    🥤 PET Buyers
+                </button>
+                <button onclick="sendQuickPrompt('احسب وفر الكربون لـ 20 طن ألومنيوم')" class="px-2.5 py-1 bg-dark-800 hover:bg-amber-500/20 hover:text-amber-400 text-gray-300 rounded-lg whitespace-nowrap border border-dark-700 transition-all">
+                    ⚙️ CO2 for Aluminum
+                </button>
+            </div>
+
+            <!-- Chat Messages Log Container -->
+            <div id="chat-messages-box" class="flex-grow p-4 overflow-y-auto space-y-3.5 text-xs">
+                <!-- Welcome Bot Message -->
+                <div class="flex gap-2.5 items-start">
+                    <div class="w-7 h-7 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0 mt-0.5">
+                        <i class="fa-solid fa-robot text-xs"></i>
+                    </div>
+                    <div class="bg-dark-950 p-3 rounded-2xl rounded-ts-none border border-dark-800 text-gray-200 leading-relaxed max-w-[85%] space-y-1">
+                        <p class="font-bold text-white text-[11px]">مرحباً بك في ReGenesis AI Advisor! 👋</p>
+                        <p class="text-gray-300">صف لي نوع المخلفات الصناعية التي تملكها (مثال: "عندي 50 طن بلاستيك PET مفروم") وسأقترح لك فوراً مسارات التحويل والمشترين المتوافقين.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Box -->
+            <div id="chat-image-preview" class="hidden px-3 pt-2 text-[10px] text-brand-300"></div>
+            <form onsubmit="handleChatSubmit(event)" class="p-3 bg-dark-950 border-t border-dark-800 flex gap-2 items-center">
+                <input type="file" id="chat-image-input" accept="image/jpeg,image/png,image/webp,image/bmp" class="hidden" onchange="previewChatImage(this)">
+                <button type="button" onclick="document.getElementById('chat-image-input').click()" title="ارفع صورة مخلفات" class="bg-dark-800 hover:bg-brand-500/20 border border-dark-700 text-brand-300 px-3 py-2 rounded-xl text-xs"><i class="fa-solid fa-paperclip"></i></button>
+                <input type="text" id="chat-user-input" placeholder="اسأل أو صف المخلفات أو ارفع صورة..." class="flex-grow min-w-0 bg-dark-900 border border-dark-700 rounded-xl px-3 py-2 text-xs text-white focus:border-brand-500 focus:outline-none">
+                <button type="submit" class="bg-brand-500 hover:bg-brand-400 text-dark-950 font-black px-4 py-2 rounded-xl text-xs transition-all flex items-center justify-center"><i class="fa-solid fa-paper-plane"></i></button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: REAL-TIME MATCH FOUND NOTIFICATION -->
+    <div id="match-modal" class="fixed inset-0 z-[110] bg-dark-950/80 backdrop-blur-md flex items-center justify-center hidden p-4">
+        <div class="glass-panel bg-dark-900 border border-brand-500/50 max-w-xl w-full p-6 sm:p-8 rounded-3xl space-y-6 animate-pop shadow-2xl glow-brand relative">
+            <button onclick="closeModal('match-modal')" class="absolute top-4 start-4 text-gray-400 hover:text-white text-base">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <div class="text-center space-y-2">
+                <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-brand-500 to-emerald-300 text-dark-950 flex items-center justify-center text-2xl mx-auto shadow-lg shadow-brand-500/30">
+                    <i class="fa-solid fa-bolt"></i>
+                </div>
+                <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30 text-xs font-black">
+                    <i class="fa-solid fa-sparkles"></i> Match Found by AI Engine!
+                </div>
+                <h3 class="text-2xl font-black text-white" id="match-modal-title">تم العثور على مطابقة ممتازة!</h3>
+                <p class="text-xs text-gray-400">قام النموذج بمطابقة مخلفاتك الجديدة مع طلب نشط بالشبكة بنسبة توافق مرتفعة.</p>
+            </div>
+
+            <!-- Match Card Box -->
+            <div id="match-modal-card" class="bg-dark-950 p-5 rounded-2xl border border-dark-800 space-y-4">
+                <!-- JS Populated -->
+            </div>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="closeModal('match-modal')" class="w-1/3 bg-dark-800 hover:bg-dark-700 text-gray-300 font-bold py-3 rounded-xl text-xs transition-all" data-i18n="btnClose">إغلاق</button>
+                <button type="button" onclick="closeModal('match-modal'); switchTab('matching');" class="w-2/3 bg-gradient-to-r from-brand-600 to-brand-400 text-dark-950 font-black py-3 rounded-xl text-xs transition-all shadow-lg shadow-brand-500/20 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-handshake"></i>
+                    <span data-i18n="btnGoNegotiate">بدء التواصل والتفاوض المباشر</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: PROFILE EDIT & DETAILS -->
+    <div id="profile-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center hidden p-4">
+        <div class="glass-panel bg-dark-900 border border-dark-700 max-w-md w-full p-6 rounded-3xl space-y-6 relative">
+            <button onclick="closeModal('profile-modal')" class="absolute top-4 start-4 text-gray-400 hover:text-white">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="flex items-center gap-3 border-b border-dark-800 pb-4">
+                <div class="w-12 h-12 rounded-2xl bg-brand-500/20 text-brand-400 flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-building-circle-check"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-white" id="prof-modal-name">مصنع المنشأة</h3>
+                    <p class="text-xs text-gray-400" id="prof-modal-email">email@factory.com</p>
+                </div>
+            </div>
+
+            <div class="space-y-3 text-xs text-gray-300">
+                <div class="flex justify-between py-1 border-b border-dark-800/60"><span class="text-gray-500" data-i18n="lblCompany">اسم الشركة:</span> <span id="prof-company" class="font-bold text-white"></span></div>
+                <div class="flex justify-between py-1 border-b border-dark-800/60"><span class="text-gray-500" data-i18n="lblRole">الدور:</span> <span id="prof-role-display" class="font-bold text-brand-400"></span></div>
+                <div class="flex justify-between py-1 border-b border-dark-800/60"><span class="text-gray-500" data-i18n="lblSector">القطاع:</span> <span id="prof-sector-display" class="font-bold text-cyan-400"></span></div>
+                <div class="flex justify-between py-1 border-b border-dark-800/60"><span class="text-gray-500" data-i18n="lblPhone">الجوال المؤكد:</span> <span id="prof-phone-display" class="font-bold text-white"></span></div>
+                <div class="flex justify-between py-1 border-b border-dark-800/60"><span class="text-gray-500" data-i18n="lblCity">المدينة:</span> <span id="prof-city-display" class="font-bold text-white"></span></div>
+            </div>
+
+            <div class="pt-4 border-t border-dark-800 flex justify-between items-center">
+                <button onclick="logoutUser()" class="px-4 py-2 bg-red-500/10 text-red-400 rounded-xl hover:bg-red-500/20 font-bold text-xs transition-all flex items-center gap-1.5">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="btnLogout">تسجيل الخروج</span>
+                </button>
+                <button onclick="closeModal('profile-modal')" class="px-5 py-2 bg-dark-800 hover:bg-dark-700 text-gray-300 font-bold text-xs rounded-xl transition-all" data-i18n="btnClose">إغلاق</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION LOGIC -->
+    <script>
+        // DICTIONARY FOR MULTI-LANGUAGE BILINGUAL SUPPORT
+        const dict = {
+            ar: {
+                tagline: "تحويل المخلفات الصناعية إلى موارد جديدة",
+                authLeftTitle: "منظومة الذكاء الاصطناعي الوطنية لإعادة تدوير النفايات الصناعية",
+                authLeftDesc: "منصة لتسجيل عروض وطلبات الخامات الصناعية، واستكشاف فرص توافق أولية مع إرشادات فنية وبيئية تحتاج إلى تحقق.",
+                authFeat1: "مطابقة تفسيرية تعتمد على مواصفات العرض والطلب المسجلة",
+                authFeat2: "إرشادات أولية لمسارات إعادة الاستخدام والرفع من القيمة",
+                authFeat3: "مؤشرات بيئية استرشادية وليست شهادات اعتماد",
+                tabSignup: "تسجيل منشأة جديدة",
+                tabLogin: "تسجيل الدخول",
+                lblFullName: "الاسم بالكامل ومسمى المسؤول *",
+                lblCompany: "اسم المصنع / الشركة *",
+                lblRole: "نوع النشاط في المنظومة *",
+                lblSector: "القطاع الصناعي *",
+                lblCity: "المنطقة الصناعية / المدينة *",
+                lblPhone: "رقم للتواصل في الحساب التجريبي *",
+                lblEmail: "البريد المؤسسي الرسمي *",
+                lblPassword: "كلمة المرور المشفرة *",
+                lblStrength: "مستوى تشفير الحساب:",
+                lblTerms: "أوافق على شروط تداول المواد ومعايير الحفاظ على البيئة ESG",
+                btnSendOtp: "متابعة إنشاء الحساب التجريبي",
+                otpMsg: "وضع عرض تجريبي — لم يتم إرسال رسالة SMS إلى:",
+                otpHint: "💡 أدخل أي 4 أرقام (مثال: 1 2 3 4) للدخول الفوري للتطبيق",
+                btnEdit: "تعديل",
+                btnVerify: "تأكيد ودخول المنظومة",
+                navDashboard: "لوحة التحكم",
+                navAddWaste: "إضافة خامة",
+                navMarket: "سوق الخامات",
+                navRoadmap: "مسارات الـ Upcycling",
+                navEsg: "تقرير ESG",
+                navMatching: "المطابقة اللحظية",
+                dashBadge: "منظومة الاقتصاد الدائري والذكاء الاصطناعي B2B",
+                dashTitle: "تحويل النفايات الصناعية إلى <span class=\"text-transparent bg-clip-text bg-gradient-to-l from-brand-400 via-emerald-300 to-brand-500\">خامات ثانوية وموارد ذات قيمة</span>",
+                dashDesc: "تسجيل عروض المخلفات وطلبات الخامات، واستكشاف فرص توافق أولية واقتراح مسارات معالجة تحتاج إلى فحص فني ومعملي قبل التنفيذ.",
+                btnAddNewWaste: "إضافة مخلفات ومطابقتها فوراً",
+                btnRunAiBot: "استشارة المساعد الذكي ReGenesis AI",
+                kpi1Title: "إجمالي كميات عروض المخلفات",
+                kpi1Sub: "مجموع الكميات المعروضة في الإعلانات الحالية",
+                kpi2Title: "فرص مطابقة أولية",
+                kpi2Sub: "لا توجد صفقات مؤكدة مسجلة",
+                kpi3Title: "انبعاثات متجنبة موثقة",
+                kpi3Sub: "لا توجد صفقات مكتملة موثقة بعد",
+                kpi4Title: "قيمة إعلانات السوق التجريبية مجتمعة",
+                kpi4Sub: "مجموع حسابي للعروض والطلبات وليس قيمة صفقات",
+                unitTons: "طن",
+                unitDeals: "عقد",
+                chart1: "توزيع الخامات حسب التصنيف الصناعي",
+                chart2: "مقارنة العروض والطلبات الحالية (لقطة من قاعدة البيانات)",
+                tableTitle: "أحدث العروض والطلبات المسجلة",
+                tableSub: "سجلات مستخدم أو سيناريوهات عرض؛ تحقق قبل التعامل",
+                btnViewAll: "استعراض السوق بالكامل",
+                thMaterial: "نوع المادة والكمية",
+                thEntity: "اسم المصنع والمنطقة",
+                thTrade: "نوع الإعلان والسعر",
+                thPurity: "نسبة النقاء",
+                thAiMatch: "توافق المطابقة AI",
+                thAction: "التفاوض",
+                formBadge: "إدخال البيانات والمطابقة اللحظية",
+                formTitle: "إضافة مخلفات أو طلب خامات جديدة",
+                formSub: "بعد الحفظ، يحسب محرك المطابقة فرص التوافق الأولية مع الإعلانات المسجلة؛ النتائج ليست قبولاً فنياً أو صفقة مؤكدة.",
+                fldTitle: "اسم الخامة أو وصف المادة *",
+                fldCat: "التصنيف الصناعي *",
+                fldType: "نوع الإعلان *",
+                fldQty: "الكمية المتاحة (بالطن) *",
+                fldPurity: "نسبة نقاء مدخلة (لا تعني أنها مختبرة معملياً) (%) *",
+                fldPrice: "السعر المدخل أو التوضيحي (جنيه مصري/طن)",
+                fldCity: "المدينة / المنطقة الصناعية *",
+                fldDesc: "مواصفات الخامة ونتائج الفحص المعملي",
+                btnCancel: "إلغاء",
+                btnSubmitAndMatch: "حفظ وتشغيل خوارزمية المطابقة التلقائية",
+                mktTitle: "سوق الخامات والمخلفات الصناعية B2B",
+                mktSub: "تصفح عروض وطلبات السوق؛ سجلات العرض الافتراضية موسومة بوضوح",
+                optAllCats: "جميع القطاعات",
+                optAllTypes: "كل الإعلانات",
+                optOffers: "عروض توفر المخلفات",
+                optRequests: "طلبات احتياج خامات",
+                roadmapHeader: "محاكي مسارات المعالجة والرفع من القيمة (Upcycling Roadmap)",
+                roadmapSub: "مراجعة شروط قبول الخامة ومسارات المعالجة والقطاعات المستفيدة والاختبارات والقيود المرجعية.",
+                lblRoadmapSelect: "اختر خامة النفايات للمعاينة التفصيلية:",
+                btnSimulate: "تحديث محاكاة خط الإنتاج",
+                esgHeader: "حاسبة تقديرية للأثر البيئي (ليست شهادة ESG)",
+                esgSub: "لا يتم حساب CO2 إلا عند إدخال معامل موثق وحدود نظام واضحة؛ النتيجة سيناريو وليست شهادة أو خفضاً معتمداً.",
+                btnExportCert: "عرض تقدير بيئي أولي",
+                esgCalcFormTitle: "مدخلات حساب الأثر البيئي",
+                esgMaterialLabel: "نوع المادة الكيميائية/الخامة",
+                esgTonnageLabel: "كمية السيناريو (طن)",
+                esgRes1: "نتيجة سيناريو CO2 (غير معتمدة)",
+                esgRes2: "مكافئ الأشجار (غير محسوب)",
+                esgRes3: "حالة التقييم البيئي",
+                matchTitle: "محرك المطابقة الأولية بين المورد والمشتري",
+                matchSub: "يحسب درجة توافق أولية من الفئة والكمية والنقاء والموقع والسعر؛ يلزم التحقق من المواصفات والتوفر.",
+                matchListTitle: "فرص التوافق النشطة حالياً في المنظومة",
+                footerRights: "ReGenesis AI Enterprise © 2026 - جميع الحقوق محفوظة",
+                btnGoNegotiate: "بدء التواصل والتفاوض المباشر",
+                btnBotLabel: "مساعد ReGenesis AI",
+                btnLogout: "تسجيل الخروج",
+                btnClose: "إغلاق"
+            },
+            en: {
+                tagline: "Turning Industrial Waste into New Resources",
+                authLeftTitle: "National AI Platform for Industrial Waste Recycling & Matching",
+                authLeftDesc: "A platform for industrial material listings, preliminary compatibility leads and indicative environmental guidance.",
+                authFeat1: "Explainable matching based on recorded supply and demand",
+                authFeat2: "Preliminary reuse and upcycling guidance",
+                authFeat3: "Indicative environmental estimates; no certification",
+                tabSignup: "Register New Facility",
+                tabLogin: "Log In",
+                lblFullName: "Full Name & Official Title *",
+                lblCompany: "Factory / Company Name *",
+                lblRole: "Facility Activity Type *",
+                lblSector: "Industrial Sector *",
+                lblCity: "Industrial Zone / City *",
+                lblPhone: "Demo contact number (no SMS is sent) *",
+                lblEmail: "Official Enterprise Email *",
+                lblPassword: "Encrypted Password *",
+                lblStrength: "Account Encryption Level:",
+                lblTerms: "I agree to Material Trade Terms & ESG Standards",
+                btnSendOtp: "Continue demo account setup",
+                otpMsg: "Demo flow — no SMS was sent to:",
+                otpHint: "💡 Enter any four digits to complete the UI demo; no SMS is sent.",
+                btnEdit: "Edit",
+                btnVerify: "Verify & Enter Platform",
+                navDashboard: "Dashboard",
+                navAddWaste: "Add Material",
+                navMarket: "Marketplace",
+                navRoadmap: "Upcycling Roadmap",
+                navEsg: "Indicative Environmental Estimate",
+                navMatching: "Live Matching",
+                dashBadge: "B2B Circular Economy Platform",
+                dashTitle: "Turning Industrial Waste into <span class=\"text-transparent bg-clip-text bg-gradient-to-l from-brand-400 via-emerald-300 to-brand-500\">High-Value Resources</span>",
+                dashDesc: "Register waste offers and raw-material demands, explore preliminary matches and review reuse pathways before technical validation.",
+                btnAddNewWaste: "Add Waste & Run Matchmaker",
+                btnRunAiBot: "Ask ReGenesis AI Assistant",
+                kpi1Title: "Total supply-offer quantity",
+                kpi1Sub: "Sum of quantities in current supply listings",
+                kpi2Title: "Potential Match Leads",
+                kpi2Sub: "No completed deals recorded",
+                kpi3Title: "Verified avoided emissions",
+                kpi3Sub: "No completed, documented transactions yet",
+                kpi4Title: "Combined value of demo marketplace listings",
+                kpi4Sub: "Arithmetic sum of offers and demands, not deal value",
+                unitTons: "Tons",
+                unitDeals: "Deals",
+                chart1: "Waste Distribution by Sector",
+                chart2: "Monthly Contracts & CO2 Reduction Growth",
+                tableTitle: "Latest Registered Listings",
+                tableSub: "User-submitted records or showcase scenarios; verify before transacting",
+                btnViewAll: "View Full Marketplace",
+                thMaterial: "Material & Tonnage",
+                thEntity: "Factory & Location",
+                thTrade: "Listing & Unit Price",
+                thPurity: "Purity Grade",
+                thAiMatch: "AI Match Precision",
+                thAction: "Action",
+                formBadge: "Live Data Input Engine",
+                formTitle: "Add Industrial Waste / Demand",
+                formSub: "After saving, the matching engine scores preliminary compatibility against recorded listings; results are not technical approval or confirmed deals.",
+                fldTitle: "Material Name / Specification *",
+                fldCat: "Industrial Sector *",
+                fldType: "Listing Type *",
+                fldQty: "Available Quantity (Tons) *",
+                fldPurity: "Entered purity (not necessarily lab-tested) (%) *",
+                fldPrice: "Entered or illustrative price (EGP/Ton)",
+                fldCity: "City / Location *",
+                fldDesc: "Material Specs & Lab Tests",
+                btnCancel: "Cancel",
+                btnSubmitAndMatch: "Save & Run AI Matching Engine",
+                mktTitle: "B2B Raw Materials & Waste Marketplace",
+                mktSub: "Browse marketplace records; simulated showcase entries are clearly labeled",
+                optAllCats: "All Sectors",
+                optAllTypes: "All Listings",
+                optOffers: "Supply Offers",
+                optRequests: "Material Demands",
+                roadmapHeader: "Upcycling Processing Roadmap Simulator",
+                roadmapSub: "Review feedstock preconditions, processing routes, potential sectors, required tests and limitations.",
+                lblRoadmapSelect: "Select waste material for details:",
+                btnSimulate: "Update Line Simulation",
+                esgHeader: "Indicative carbon scenario calculator (not an ESG certificate)",
+                esgSub: "A documented factor and system boundary are required; output is a scenario, not verified avoided emissions or a certificate.",
+                btnExportCert: "Preview indicative environmental estimate",
+                esgCalcFormTitle: "Environmental Audit Inputs",
+                esgMaterialLabel: "Chemical / Material Type",
+                esgTonnageLabel: "Scenario quantity (tons)",
+                esgRes1: "Scenario CO2 result (not verified)",
+                esgRes2: "Tree equivalent (not calculated)",
+                esgRes3: "ESG Audit Grade",
+                matchTitle: "Preliminary supplier–buyer matching engine",
+                matchSub: "Scores preliminary compatibility using category, quantity, purity, location and price; verify all specifications and availability.",
+                matchListTitle: "Active Compatible Pairs in System",
+                footerRights: "ReGenesis AI Enterprise © 2026 - All rights reserved",
+                btnGoNegotiate: "Connect & Negotiate Now",
+                btnBotLabel: "ReGenesis AI Bot",
+                btnLogout: "Logout",
+                btnClose: "Close"
+            }
+        };
+
+        let currentLang = 'ar';
+
+        function toggleLanguage() {
+            currentLang = currentLang === 'ar' ? 'en' : 'ar';
+            const root = document.getElementById('html-root');
+            root.setAttribute('lang', currentLang);
+            root.setAttribute('dir', currentLang === 'ar' ? 'rtl' : 'ltr');
+
+            const labelText = currentLang === 'ar' ? 'EN / العربية' : 'AR / English';
+            if (document.getElementById('lang-label')) document.getElementById('lang-label').innerText = labelText;
+            if (document.getElementById('lang-label-auth')) document.getElementById('lang-label-auth').innerText = labelText;
+
+            updateUITexts();
+        }
+
+        function updateUITexts() {
+            const currentDict = dict[currentLang];
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (currentDict[key]) {
+                    el.innerHTML = currentDict[key];
+                }
+            });
+            renderDashboardTable();
+            renderMarketplace();
+            renderRoadmap();
+            renderMatchingEngine();
+            recalcESG();
+        }
+
+        // ================= AUTHENTICATION & SESSION MANAGEMENT =================
+        let authToken = localStorage.getItem('regenesis_token_v1') || null;
+        let currentUser = authToken ? (JSON.parse(localStorage.getItem('regenesis_user_v3') || 'null')) : null;
+        let pendingUser = null;
+
+        function enterDemoMode() {
+            authToken = null;
+            currentUser = {id:'demo-readonly', fullname:'زائر العرض', email:'demo@local.invalid', company:'حساب عرض توضيحي', role:'Read-only Demo', sector:'جميع القطاعات', city:'مصر', phone:'', is_demo:true};
+            localStorage.removeItem('regenesis_token_v1');
+            localStorage.setItem('regenesis_user_v3', JSON.stringify(currentUser));
+            document.getElementById('auth-wall-overlay').classList.add('hidden');
+            renderAuthHeader();
+            rgLoadListings();
+            showToast('تم فتح وضع العرض. بيانات السوق افتراضية ولا توجد صفقات حقيقية.', 'info');
+        }
+        window.enterDemoMode = enterDemoMode;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            if (currentUser) {
+                document.getElementById('auth-wall-overlay').classList.add('hidden');
+            } else {
+                document.getElementById('auth-wall-overlay').classList.remove('hidden');
+            }
+            renderAuthHeader();
+            renderDashboardTable();
+            renderMarketplace();
+            renderRoadmap();
+            renderMatchingEngine();
+            initCharts();
+            recalcESG();
+        });
+
+        function switchAuthTab(mode) {
+            document.getElementById('auth-mode').value = mode;
+            const signupGroup = document.getElementById('signup-fields-group');
+            const termsBox = document.getElementById('terms-box');
+            const submitBtnText = document.getElementById('auth-submit-btn-text');
+            const termsInput = document.getElementById('auth-terms');
+            if (termsInput) termsInput.required = mode === 'signup';
+            const tabSignup = document.getElementById('auth-tab-signup');
+            const tabLogin = document.getElementById('auth-tab-login');
+
+            if (mode === 'signup') {
+                signupGroup.classList.remove('hidden');
+                termsBox.classList.remove('hidden');
+                submitBtnText.innerText = currentLang === 'ar' ? 'إنشاء الحساب' : 'Create account';
+                tabSignup.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold transition-all bg-brand-500 text-dark-950 shadow-md';
+                tabLogin.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white';
+            } else {
+                signupGroup.classList.add('hidden');
+                termsBox.classList.add('hidden');
+                submitBtnText.innerText = currentLang === 'ar' ? 'تسجيل الدخول' : 'Sign in';
+                tabLogin.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold transition-all bg-brand-500 text-dark-950 shadow-md';
+                tabSignup.className = 'flex-1 py-2.5 rounded-xl text-xs font-bold transition-all text-gray-400 hover:text-white';
+            }
+        }
+
+        function evalPassStrength(val) {
+            const meter = document.getElementById('pass-meter');
+            const label = document.getElementById('pass-strength-label');
+
+            if (!val) {
+                meter.style.width = '0%';
+                label.innerText = '-';
+                return;
+            }
+
+            let score = 0;
+            if (val.length >= 6) score++;
+            if (val.length >= 8) score++;
+            if (/[A-Z]/.test(val) || /[0-9]/.test(val)) score++;
+            if (/[^A-Za-z0-9]/.test(val)) score++;
+
+            if (score <= 1) {
+                meter.style.width = '30%';
+                meter.className = 'h-full transition-all duration-300 bg-red-500';
+                label.innerText = currentLang === 'ar' ? 'ضعيفة' : 'Weak';
+                label.className = 'font-bold text-red-500';
+            } else if (score === 2 || score === 3) {
+                meter.style.width = '65%';
+                meter.className = 'h-full transition-all duration-300 bg-amber-500';
+                label.innerText = currentLang === 'ar' ? 'متوسطة' : 'Medium';
+                label.className = 'font-bold text-amber-500';
+            } else {
+                meter.style.width = '100%';
+                meter.className = 'h-full transition-all duration-300 bg-brand-500';
+                label.innerText = currentLang === 'ar' ? 'قوية جداً ومؤمنة' : 'Strong & Encrypted';
+                label.className = 'font-bold text-brand-400';
+            }
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const mode = document.getElementById('auth-mode').value;
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const code = document.getElementById('auth-country-code').value;
+            const phone = document.getElementById('auth-phone').value.trim();
+            const submit = document.querySelector('#authWallForm button[type="submit"]');
+            if (!password || password.length < 8) {
+                showToast(currentLang === 'ar' ? 'كلمة المرور يجب أن تكون 8 أحرف على الأقل' : 'Password must be at least 8 characters', 'error');
+                return;
+            }
+            if (submit) submit.disabled = true;
+            try {
+                let path = '/v1/auth/login';
+                const payload = { email, password };
+                if (mode === 'signup') {
+                    path = '/v1/auth/register?' + new URLSearchParams({
+                        factory_name: document.getElementById('auth-company').value.trim(),
+                        role: document.getElementById('auth-role').value,
+                        sector: document.getElementById('auth-sector').value,
+                        city: document.getElementById('auth-city').value.trim() || 'غير محدد'
+                    }).toString();
+                    payload.full_name = document.getElementById('auth-fullname').value.trim();
+                    payload.phone = phone ? `${code} ${phone}` : null;
+                    if (!payload.full_name || !document.getElementById('auth-company').value.trim()) throw new Error(currentLang === 'ar' ? 'أدخل اسم المسؤول واسم المنشأة' : 'Enter contact name and facility name');
+                }
+                const response = await fetch(REGENESIS_API + path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)});
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+                authToken = data.access_token;
+                localStorage.setItem('regenesis_token_v1', authToken);
+                const factory = data.factory || {};
+                currentUser = {
+                    id: data.user.id, fullname: data.user.full_name,
+                    company: factory.name || email, role: factory.role || 'Member',
+                    sector: factory.sector || 'غير محدد', city: factory.city || 'غير محدد',
+                    phone: data.user.phone || '', email: data.user.email,
+                    is_verified: !!factory.is_verified
+                };
+                localStorage.setItem('regenesis_user_v3', JSON.stringify(currentUser));
+                document.getElementById('auth-wall-overlay').classList.add('hidden');
+                renderAuthHeader();
+                showToast(currentLang === 'ar' ? 'تم تسجيل الدخول عبر الخادم بنجاح. المنشأة بانتظار التحقق.' : 'Signed in. Facility verification is pending.');
+                if (typeof rgLoadListings === 'function') rgLoadListings();
+            } catch (err) {
+                console.error('Authentication failed:', err);
+                showToast((currentLang === 'ar' ? 'تعذر تسجيل الدخول: ' : 'Authentication failed: ') + (err.message || ''), 'error');
+            } finally { if (submit) submit.disabled = false; }
+        }
+
+        function handleOtpSubmit(e) {
+            e.preventDefault();
+            currentUser = pendingUser;
+            localStorage.setItem('regenesis_user_v3', JSON.stringify(currentUser));
+            document.getElementById('auth-wall-overlay').classList.add('hidden');
+            renderAuthHeader();
+            showToast(currentLang === 'ar' ? 'تم توثيق الدخول بنجاح!' : 'Logged in successfully!');
+        }
+
+        function backToAuthForm() {
+            document.getElementById('otpForm').classList.add('hidden');
+            document.getElementById('authWallForm').classList.remove('hidden');
+        }
+
+        function logoutUser() {
+            currentUser = null;
+            localStorage.removeItem('regenesis_user_v3');
+            localStorage.removeItem('regenesis_token_v1');
+            authToken = null;
+            renderAuthHeader();
+            closeModal('profile-modal');
+            document.getElementById('auth-wall-overlay').classList.remove('hidden');
+            backToAuthForm();
+            showToast(currentLang === 'ar' ? 'تم تسجيل الخروج وقفل الجلسة' : 'Logged out & session closed', 'info');
+        }
+
+        function renderAuthHeader() {
+            const area = document.getElementById('auth-header-area');
+            if (currentUser) {
+                area.innerHTML = `
+                    <button onclick="openProfileModal()" class="flex items-center gap-2 glass-card hover:bg-dark-800 text-white font-bold px-3.5 py-2 rounded-xl text-xs border border-dark-700 transition-all">
+                        <i class="fa-solid fa-circle-user text-brand-400 text-sm"></i>
+                        <span>${currentUser.company}</span>
+                    </button>
+                `;
+            } else {
+                area.innerHTML = `
+                    <button onclick="document.getElementById('auth-wall-overlay').classList.remove('hidden')" class="bg-gradient-to-r from-brand-600 to-brand-400 text-dark-950 font-black px-4 py-2 rounded-xl text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-lock"></i>
+                        <span>${currentLang==='ar'?'الدخول':'Login'}</span>
+                    </button>
+                `;
+            }
+        }
+
+        function openProfileModal() {
+            if (!currentUser) return;
+            document.getElementById('prof-modal-name').innerText = currentUser.fullname;
+            document.getElementById('prof-modal-email').innerText = currentUser.email;
+            document.getElementById('prof-company').innerText = currentUser.company;
+            document.getElementById('prof-role-display').innerText = currentUser.role;
+            document.getElementById('prof-sector-display').innerText = currentUser.sector;
+            document.getElementById('prof-phone-display').innerText = currentUser.phone;
+            document.getElementById('prof-city-display').innerText = currentUser.city;
+            document.getElementById('profile-modal').classList.remove('hidden');
+        }
+
+        // ================= LISTINGS DATA STORE =================
+        let listings = [];
+        let matchEvents = [];
+        let wastePieChartInstance = null;
+        let tradesLineChartInstance = null;
+
+        function rgEscapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+        }
+
+        function renderMarketplace() {
+            const grid = document.getElementById('marketplace-grid');
+            if (!grid) return;
+            const query = (document.getElementById('mkt-search')?.value || '').trim().toLowerCase();
+            const category = document.getElementById('mkt-cat')?.value || 'ALL';
+            const type = document.getElementById('mkt-type')?.value || 'ALL';
+            const rows = listings.filter(item => {
+                const trade = String(item.tradeType || item.trade_type || '');
+                const haystack = [item.title,item.category,item.factory,item.city,item.desc].join(' ').toLowerCase();
+                return (!query || haystack.includes(query)) && (category === 'ALL' || item.category === category) &&
+                    (type === 'ALL' || (type.includes('عرض') ? trade.includes('عرض') : trade.includes('طلب')));
+            });
+            if (!rows.length) {
+                grid.innerHTML = `<div class="col-span-full glass-panel rounded-2xl p-8 text-center text-sm text-gray-400">${currentLang==='ar'?'لا توجد نتائج مطابقة للفلاتر الحالية.':'No records match the selected filters.'}</div>`;
+                return;
+            }
+            grid.innerHTML = rows.map(item => {
+                const demo = item.data_origin === 'demo_synthetic';
+                const offer = String(item.tradeType || '').includes('عرض');
+                const image = Array.isArray(item.images) && item.images.length ? item.images[0] : '';
+                const currency = item.currency || 'EGP';
+                const unit = item.unit || 'طن';
+                const imageBlock = image ? `<div class="relative h-48 bg-dark-950 overflow-hidden"><img src="${rgEscapeHtml(image)}" alt="${rgEscapeHtml(item.title)}" class="w-full h-full object-cover" loading="lazy" onerror="this.style.display='none'"><span class="absolute bottom-2 end-2 rounded-lg bg-black/70 px-2 py-1 text-[9px] text-amber-200">${item.images_are_illustrative ? 'صورة توضيحية مولّدة' : 'صورة مرفقة من الناشر'}</span></div>` : `<div class="h-48 bg-dark-950 flex items-center justify-center text-5xl text-gray-700"><i class="fa-solid fa-recycle"></i></div>`;
+                const provenance = demo ? 'سيناريو افتراضي للعرض' : (item.data_origin === 'public_directory' ? 'دليل منشآت عام' : 'إعلان مستخدم — غير متحقق');
+                const priceLabel = Number(item.price || 0).toLocaleString('en-US') + ' ' + currency + '/' + unit;
+                return `<article class="glass-panel rounded-2xl border border-dark-800 overflow-hidden flex flex-col hover:border-brand-500/50 transition-all">
+                    ${imageBlock}
+                    <div class="p-5 flex flex-col flex-1 gap-3">
+                        <div class="flex items-start justify-between gap-2"><span class="text-[10px] font-bold px-2 py-1 rounded-lg ${offer?'bg-brand-500/10 text-brand-300':'bg-cyan-500/10 text-cyan-300'}">${offer?'عرض مخلفات':'طلب خامة'}</span><span class="text-[9px] px-2 py-1 rounded-lg ${demo?'bg-amber-500/10 text-amber-200':'bg-dark-800 text-gray-300'}">${provenance}</span></div>
+                        <div><p class="text-[10px] text-brand-300 mb-1">${rgEscapeHtml(item.category)} · ${rgEscapeHtml(item.id || '')}</p><h3 class="text-base font-black text-white leading-relaxed">${rgEscapeHtml(item.title)}</h3></div>
+                        <p class="text-[11px] text-gray-400 leading-relaxed line-clamp-3">${rgEscapeHtml(item.desc || '')}</p>
+                        <div class="grid grid-cols-2 gap-2 text-xs">
+                            <div class="rounded-xl bg-dark-950 p-3"><span class="block text-gray-500 text-[9px] mb-1">الكمية</span><b class="text-white">${Number(item.qty).toLocaleString()} ${rgEscapeHtml(unit)}</b></div>
+                            <div class="rounded-xl bg-dark-950 p-3"><span class="block text-gray-500 text-[9px] mb-1">النقاء المسجل</span><b class="text-white">${Number(item.purity).toFixed(1)}%</b></div>
+                            <div class="rounded-xl bg-dark-950 p-3 col-span-2"><span class="block text-gray-500 text-[9px] mb-1">${offer?'السعر التوضيحي للعرض':'القيمة المستهدفة في الطلب'}</span><b class="text-brand-300 text-lg">${priceLabel}</b><span class="block text-[9px] text-gray-500 mt-1">${rgEscapeHtml(item.price_basis || 'السعر لم يتم التحقق منه')}</span></div>
+                        </div>
+                        <div class="pt-2 border-t border-dark-800 mt-auto"><p class="text-xs text-white font-bold">${rgEscapeHtml(item.factory)}</p><p class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-location-dot me-1"></i>${rgEscapeHtml(item.city)}</p></div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <button onclick="askAboutListing('${rgEscapeHtml(item.id)}')" class="bg-brand-500/10 hover:bg-brand-500/20 border border-brand-500/30 text-brand-300 font-bold text-[10px] rounded-xl py-2.5"><i class="fa-solid fa-robot me-1"></i> اسأل المساعد</button>
+                            <button onclick="analyzeListingImage('${rgEscapeHtml(item.id)}')" class="bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 text-cyan-300 font-bold text-[10px] rounded-xl py-2.5"><i class="fa-solid fa-eye me-1"></i> حلل الصورة بالرؤية</button>
+                        </div>
+                    </div></article>`;
+            }).join('');
+        }
+
+        function askAboutListing(listingId) {
+            const item = listings.find(x => String(x.id) === String(listingId));
+            if (!item) return;
+            const prompt = `حلل لي الخامة الموجودة في الإعلان ${item.id}: ${item.title}. وضّح جودة البيانات والفحوص المطلوبة ومسارات إعادة التدوير وUpcycling والمشترين أو الموردين المحتملين من قاعدة المنصة. هل السعر والبيانات حقيقية أم تجريبية؟`;
+            document.getElementById('chat-user-input').value = prompt;
+            document.getElementById('chatbot-window').classList.remove('hidden');
+        }
+        window.askAboutListing = askAboutListing;
+
+        async function analyzeListingImage(listingId) {
+            const item = listings.find(x => String(x.id) === String(listingId));
+            if (!item || !Array.isArray(item.images) || !item.images.length) { showToast('لا توجد صورة مرفقة لهذا الإعلان.', 'error'); return; }
+            document.getElementById('chatbot-window').classList.remove('hidden');
+            const box = document.getElementById('chat-messages-box');
+            const loading = addChatBubble('assistant', 'جاري إرسال صورة الإعلان إلى موديل Qwen Vision للتحليل البصري...');
+            try {
+                const imageResponse = await fetch(item.images[0]);
+                if (!imageResponse.ok) throw new Error('تعذر تحميل صورة الإعلان.');
+                const blob = await imageResponse.blob();
+                const ext = (blob.type || 'image/jpeg').split('/')[1] || 'jpg';
+                const file = new File([blob], `regenesis-${item.id}.${ext}`, {type: blob.type || 'image/jpeg'});
+                const fd = new FormData();
+                fd.append('file', file);
+                fd.append('note', `هذه صورة مرتبطة بسجل ${item.id}: ${item.title}. الفئة المسجلة: ${item.category}. ${item.images_are_illustrative ? 'تنبيه: الصورة توضيحية مولدة وليست صورة دفعة خام فعلية.' : ''} لا تفترض نتائج فحص غير ظاهرة.`);
+                const response = await fetch(REGENESIS_API.replace(/\/api$/, '') + '/api/v1/advisor/analyze-image', {method:'POST', headers:authToken?{'Authorization':'Bearer '+authToken}:{}, body:fd});
+                if (!response.ok) { const t = await response.text(); throw new Error(t || `Vision API ${response.status}`); }
+                const result = await response.json();
+                const prefix = item.images_are_illustrative ? 'ملاحظة مهمة: الصورة توضيحية مولّدة، لذلك هذا اختبار لعمل مسار الرؤية وليس فحصاً لشحنة فعلية.\n\n' : '';
+                const answer = prefix + result.analysis + '\n\n' + result.disclaimer;
+                addChatBubble('assistant', answer);
+                rgChatHistory.push({role:'assistant',content:answer});
+                persistRgChat();
+            } catch (err) {
+                addChatBubble('assistant', 'تعذر تحليل الصورة: ' + (err.message || 'تحقق من تشغيل موديل qwen2.5vl:3b في Ollama.'));
+            }
+            if (loading) loading.remove();
+            box.scrollTop = box.scrollHeight;
+        }
+        window.analyzeListingImage = analyzeListingImage;
+
+        function renderDashboardTable() {
+            const table = document.getElementById('dashboard-recent-table');
+            table.innerHTML = '';
+
+            if (!listings.length) { table.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-500 text-xs">${currentLang==='ar'?'لا توجد عروض أو طلبات منشورة بعد. سجّل أول إعلان بعد تسجيل الدخول.':'No active listings yet. Publish the first listing after signing in.'}</td></tr>`; }
+            listings.slice(0, 5).forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-dark-850/50 transition-colors';
+                tr.innerHTML = `
+                    <td class="p-3.5 font-bold text-white flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full ${String(item.tradeType || '').includes('عرض') ? 'bg-brand-500' : 'bg-cyan-400'}"></span>
+                        <div>
+                            <div>${rgEscapeHtml(item.title)}</div>
+                            <span class="text-[10px] text-gray-500 font-mono">${Number(item.qty || 0)} ${rgEscapeHtml(item.unit || (currentLang==='ar'?'طن':'Tons'))}</span>
+                        </div>
+                    </td>
+                    <td class="p-3.5 text-gray-300">
+                        <div>${rgEscapeHtml(item.factory)}</div>
+                        <span class="text-[10px] text-gray-500"><i class="fa-solid fa-location-dot me-1"></i>${rgEscapeHtml(item.city)}</span>
+                    </td>
+                    <td class="p-3.5">
+                        <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold ${String(item.tradeType || '').includes('عرض') ? 'bg-brand-500/10 text-brand-400 border border-brand-500/20' : 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20'}">
+                            ${String(item.tradeType || '').includes('عرض') ? (currentLang==='ar'?'عرض':'Supply') : (currentLang==='ar'?'طلب':'Demand')} | ${Number(item.price).toLocaleString()} ${item.currency || 'EGP'}/${item.unit || 'طن'}
+                        </span>
+                    </td>
+                    <td class="p-3.5 font-bold text-emerald-400">${Number(item.purity || 0)}%</td>
+                    <td class="p-3.5 text-emerald-400 font-semibold">${rgEscapeHtml(item.aiMatch || 'توافق أولي يتطلب تحققاً')}</td>
+                    <td class="p-3.5">
+                        <button onclick="switchTab('matching')" class="bg-dark-800 hover:bg-brand-600 hover:text-dark-950 text-white font-bold text-[11px] px-3 py-1.5 rounded-lg border border-dark-700 transition-all">
+                            ${currentLang==='ar'?'تفاوض':'Negotiate'}
+                        </button>
+                    </td>
+                `;
+                table.appendChild(tr);
+            });
+
+            const offers = listings.filter(x => String(x.tradeType || '').includes('عرض'));
+            const demands = listings.filter(x => String(x.tradeType || '').includes('طلب'));
+            const possiblePairs = Array.isArray(matchEvents) ? matchEvents.length : 0;
+            const demoValue = listings.filter(x => x.data_origin === 'demo_synthetic').reduce((sum, x) => sum + Number(x.qty || 0) * Number(x.price || 0), 0);
+            document.getElementById('kpi-waste-val').innerHTML = `${offers.reduce((sum,x)=>sum+Number(x.qty||0),0).toLocaleString()} <span class="text-xs font-normal text-gray-400">${currentLang==='ar'?'طن معروض':'tons offered'}</span>`;
+            document.getElementById('kpi-matches-val').innerHTML = `${possiblePairs.toLocaleString()} <span class="text-xs font-normal text-gray-400">${currentLang==='ar'?'فرصة أولية':'potential'}</span>`;
+            const carbon = document.getElementById('kpi-co2-val'); if (carbon) carbon.innerHTML = `0 <span class="text-xs font-normal text-gray-400">${currentLang==='ar'?'طن CO2':'tCO2'}</span>`;
+            const value = document.getElementById('kpi-value-val'); if (value) value.textContent = `${demoValue.toLocaleString('en-US',{maximumFractionDigits:0})} EGP`;
+            updateChartsFromListings();
+        }
+
+        // ================= UPCYCLING ROADMAP SIMULATOR MODULE =================
+        const roadmapMaterialMap = { wood: 'خشب', pet: 'PET', aluminum: 'ألومنيوم', textile: 'قطن' };
+
+        async function renderRoadmap() {
+            const selectVal = document.getElementById('roadmap-preset-select').value;
+            const material = roadmapMaterialMap[selectVal] || 'خشب';
+            const container = document.getElementById('roadmap-output-container');
+            container.innerHTML = '<div class="p-6 text-center text-xs text-brand-300">جاري استرجاع مسارات المعالجة من كتالوج الخامات المحلي...</div>';
+            try {
+                const result = await rgApi('/v1/advisor/pathways?material=' + encodeURIComponent(material));
+                const items = (result && Array.isArray(result.items)) ? result.items : [];
+                if (!items.length) {
+                    container.innerHTML = '<div class="p-6 text-center text-xs text-gray-400">لا توجد مسارات مطابقة في الكتالوج. راجع كتالوج الخامات أو أدخل نوع خام أدق.</div>';
+                    return;
+                }
+                container.innerHTML = `<div class="mb-3 rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 text-[10px] text-amber-200">هذه مسارات مرجعية محتملة من قاعدة البيانات وليست وصفة تشغيل أو تصميم مصنع. يلزم فحص عينة الخام ومراجعة المواصفات والسلامة والمعايير قبل التنفيذ. لا تعرض المنصة فترة استرداد أو عائداً مالياً دون دراسة جدوى وعروض أسعار فعلية.</div>` + items.map(item => `
+                    <article class="bg-dark-950 p-5 rounded-2xl border border-dark-800 space-y-4">
+                        <div class="flex flex-wrap items-start justify-between gap-2"><div><h4 class="text-sm font-bold text-brand-300">${rgEscapeHtml(item.input_material || material)}</h4><p class="text-xs text-white mt-1">الناتج المحتمل: ${rgEscapeHtml(item.potential_output || 'غير محدد')}</p></div><span class="text-[9px] px-2 py-1 rounded-lg bg-cyan-500/10 text-cyan-200">${rgEscapeHtml(item.confidence_label || 'مسار محتمل')}</span></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="glass-card p-4 rounded-xl"><h5 class="text-[11px] text-brand-300 font-bold mb-2">شروط قبول الخام</h5><p class="text-[11px] text-gray-300 leading-relaxed">${rgEscapeHtml(item.preconditions || 'غير محددة في المرجع')}</p></div>
+                            <div class="glass-card p-4 rounded-xl"><h5 class="text-[11px] text-brand-300 font-bold mb-2">مسار المعالجة</h5><p class="text-[11px] text-gray-300 leading-relaxed">${rgEscapeHtml(item.process_route || 'غير محدد في المرجع')}</p></div>
+                            <div class="glass-card p-4 rounded-xl"><h5 class="text-[11px] text-brand-300 font-bold mb-2">القطاعات المستفيدة المحتملة</h5><p class="text-[11px] text-gray-300 leading-relaxed">${rgEscapeHtml(item.potential_user_industries || 'غير محددة')}</p></div>
+                            <div class="glass-card p-4 rounded-xl"><h5 class="text-[11px] text-brand-300 font-bold mb-2">الاختبارات المهمة</h5><p class="text-[11px] text-gray-300 leading-relaxed">${rgEscapeHtml(item.critical_tests || 'يلزم تحديدها وفق المواصفة')}</p></div>
+                        </div>
+                        <div class="rounded-xl border border-rose-500/20 bg-rose-500/5 p-3"><h5 class="text-[11px] text-rose-300 font-bold mb-1">القيود والمخاطر</h5><p class="text-[11px] text-gray-300 leading-relaxed">${rgEscapeHtml(item.limitations || 'راجع اشتراطات السلامة واللوائح')}</p></div>
+                        <p class="text-[9px] text-gray-500">أساس المرجع: ${rgEscapeHtml(item.reference_basis || 'كتالوج ReGenesis المحلي')}</p>
+                    </article>`).join('');
+            } catch (error) {
+                container.innerHTML = `<div class="p-5 text-xs text-amber-200">تعذر تحميل مسارات التدوير: ${rgEscapeHtml(error.message || 'API unavailable')}</div>`;
+            }
+        }
+
+        // ================= ESG CARBON CALCULATOR MODULE =================
+        function recalcESG() {
+            const material = document.getElementById('esg-mat-type').value;
+            const factor = Number(document.getElementById('esg-factor').value);
+            const tons = Math.max(0, Number(document.getElementById('esg-tonnage').value) || 0);
+            const output = document.getElementById('esg-val-co2');
+            const trees = document.getElementById('esg-val-trees');
+            const status = document.getElementById('esg-val-score');
+            const certText = document.getElementById('cert-text-body');
+            if (!Number.isFinite(factor) || factor <= 0) {
+                output.textContent = 'غير محسوب';
+                trees.textContent = 'غير متاح';
+                status.textContent = 'معامل مطلوب';
+                if (certText) certText.innerText = `لم يتم احتساب أثر كربوني لكمية ${tons} طن من فئة ${material} لعدم إدخال معامل موثق ومنهجية حساب معتمدة. النتيجة ليست شهادة ESG أو بصمة كربونية.`;
+                return;
+            }
+            const scenario = tons * factor;
+            output.textContent = `${scenario.toFixed(2)} طن CO2 (سيناريو)`;
+            trees.textContent = 'غير محسوب';
+            status.textContent = 'تقدير غير معتمد';
+            if (certText) certText.innerText = `نتيجة حسابية توضيحية فقط: ${tons} طن من فئة ${material} × معامل أدخله المستخدم (${factor}) = ${scenario.toFixed(2)} طن CO2. لا تمثل هذه النتيجة انبعاثات متجنبة مؤكدة أو اعتماداً بيئياً؛ يلزم توثيق مصدر المعامل وحدود النظام والمواد المستبدلة والطاقة والنقل والفواقد ومراجعة مستقلة.`;
+        }
+
+        function generateEsgCertificate() {
+            showToast(currentLang === 'ar' ? 'لا تصدر المنصة شهادات اعتماد حالياً؛ المعروض تقدير أولي فقط.' : 'The platform does not issue certifications; this is an indicative estimate only.', 'info');
+        }
+
+        // ================= MATCHING ENGINE RENDER =================
+        function renderMatchingEngine() {
+            const card = document.getElementById('active-top-match-card');
+            const list = document.getElementById('matching-list-container');
+            if (Array.isArray(matchEvents) && matchEvents.length) {
+                const formatPair = (match) => {
+                    const aIsOffer = String(match.trade_type || '').includes('عرض');
+                    const offer = aIsOffer ? {factory:match.factory,title:match.title,qty:match.qty,unit:match.unit,city:match.city,price:match.price,currency:match.currency} : {factory:match.bfactory,title:match.btitle,qty:match.bqty,unit:match.bunit,city:match.bcity,price:match.bprice,currency:match.bcurrency};
+                    const demand = aIsOffer ? {factory:match.bfactory,title:match.btitle,qty:match.bqty,unit:match.bunit,city:match.bcity,price:match.bprice,currency:match.bcurrency} : {factory:match.factory,title:match.title,qty:match.qty,unit:match.unit,city:match.city,price:match.price,currency:match.currency};
+                    return {offer,demand};
+                };
+                const top = matchEvents[0];
+                const pair = formatPair(top);
+                const demo = matchEvents.some(m => m.data_origin === 'demo_synthetic' || m.bdata_origin === 'demo_synthetic') || String(top.status || '').toLowerCase() === 'demo';
+                card.innerHTML = `<div class="grid md:grid-cols-3 gap-4 items-center">
+                    <div class="glass-panel p-5 rounded-2xl"><span class="text-xs text-brand-400">عرض المورد</span><h4 class="text-white font-bold mt-2">${rgEscapeHtml(pair.offer.factory || '')}</h4><p class="text-gray-400 text-xs">${rgEscapeHtml(pair.offer.title || '')} · ${Number(pair.offer.qty || 0)} ${rgEscapeHtml(pair.offer.unit || 'طن')} · ${rgEscapeHtml(pair.offer.city || '')}</p><p class="text-brand-300 text-xs mt-2">${Number(pair.offer.price || 0).toLocaleString()} ${rgEscapeHtml(pair.offer.currency || 'EGP')}/${rgEscapeHtml(pair.offer.unit || 'طن')}</p></div>
+                    <div class="text-center"><div class="text-3xl font-black text-brand-300">${Number(top.score || 0).toFixed(1)}%</div><div class="text-[10px] text-gray-400 mt-1">درجة توافق متعددة العوامل</div><span class="inline-block text-[9px] mt-2 px-2 py-1 rounded-lg ${demo?'bg-amber-500/10 text-amber-200':'bg-brand-500/10 text-brand-300'}">${demo?'مطابقة تجريبية':'نتيجة محرك المطابقة'}</span></div>
+                    <div class="glass-panel p-5 rounded-2xl"><span class="text-xs text-cyan-400">طلب المشتري</span><h4 class="text-white font-bold mt-2">${rgEscapeHtml(pair.demand.factory || '')}</h4><p class="text-gray-400 text-xs">${rgEscapeHtml(pair.demand.title || '')} · ${Number(pair.demand.qty || 0)} ${rgEscapeHtml(pair.demand.unit || 'طن')} · ${rgEscapeHtml(pair.demand.city || '')}</p><p class="text-cyan-300 text-xs mt-2">${Number(pair.demand.price || 0).toLocaleString()} ${rgEscapeHtml(pair.demand.currency || 'EGP')}/${rgEscapeHtml(pair.demand.unit || 'طن')}</p></div>
+                    </div><p class="text-[10px] text-gray-400 mt-3">${rgEscapeHtml(top.explanation || '')} — المطابقة ترشيح أولي ولا تعني توافر المخزون أو قبول المواصفة أو إتمام صفقة.</p>`;
+                list.innerHTML = matchEvents.slice(0,10).map(match => {
+                    const p = formatPair(match);
+                    const isDemo = String(match.status || '').toLowerCase() === 'demo' || match.data_origin === 'demo_synthetic' || match.bdata_origin === 'demo_synthetic';
+                    return `<div class="glass-card p-4 rounded-xl border border-dark-800 mb-2"><div class="flex items-center justify-between gap-2"><h5 class="text-xs font-bold text-white">${rgEscapeHtml(p.offer.factory || '')} ↔ ${rgEscapeHtml(p.demand.factory || '')}</h5><span class="text-brand-300 font-black text-xs">${Number(match.score || 0).toFixed(1)}%</span></div><p class="text-[11px] text-gray-400 mt-1">${rgEscapeHtml(match.category || match.bcategory || '')} · ${rgEscapeHtml(p.offer.title || '')} / ${rgEscapeHtml(p.demand.title || '')}</p><p class="text-[10px] ${isDemo?'text-amber-300':'text-cyan-300'} mt-2">${isDemo?'سيناريو مطابقة افتراضي للعرض':'مطابقة آلية أولية'} — يلزم التحقق من المواصفات والنقاء والكمية والموقع والسعر.</p></div>`;
+                }).join('');
+                return;
+            }
+            const offers = listings.filter(x => String(x.tradeType || x.trade_type || '').includes('عرض'));
+            const demands = listings.filter(x => String(x.tradeType || x.trade_type || '').includes('طلب'));
+            card.innerHTML = `<div class="p-6 text-center text-gray-400 text-sm">لا توجد نتائج من محرك المطابقة بعد. أضف عروضاً وطلبات متقابلة في الفئة نفسها.</div>`;
+            list.innerHTML = `<p class="text-xs text-gray-500 p-4">العروض الحالية: ${offers.length} · الطلبات الحالية: ${demands.length}. لا يتم اعتبار تطابق التصنيف وحده موافقة فنية أو صفقة.</p>`;
+        }
+
+        // ================= 3. FLOATING INTEGRATED AI CHATBOT LOGIC =================
+        function toggleChatbot() {
+            const win = document.getElementById('chatbot-window');
+            win.classList.toggle('hidden');
+        }
+
+        function sendQuickPrompt(promptText) {
+            document.getElementById('chat-user-input').value = promptText;
+            handleChatSubmit(new Event('submit'));
+        }
+
+        // ================= GENERAL HELPERS & CHARTS =================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(b => {
+                b.className = 'tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-gray-400 hover:text-white hover:bg-dark-800';
+            });
+            const active = document.getElementById(`nav-${tabId}`);
+            if (active) {
+                active.className = 'tab-btn px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 text-brand-400 bg-brand-500/10 border border-brand-500/20';
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        function showToast(msg, type = 'success') {
+            const c = document.getElementById('toast-container');
+            const t = document.createElement('div');
+            t.className = `pointer-events-auto px-4 py-3 rounded-2xl glass-card border text-xs font-bold flex items-center gap-2.5 shadow-2xl ${
+                type === 'success' ? 'border-brand-500/50 text-brand-400 bg-dark-900/95' : 'border-cyan-500/50 text-cyan-400 bg-dark-900/95'
+            }`;
+            t.innerHTML = `<i class="fa-solid ${type === 'success' ? 'fa-circle-check' : 'fa-circle-info'} text-sm"></i><span>${msg}</span>`;
+            c.appendChild(t);
+            setTimeout(() => { t.remove(); }, 3500);
+        }
+
+        function initCharts() {
+            const ctx1 = document.getElementById('wastePieChart').getContext('2d');
+            wastePieChartInstance = new Chart(ctx1, {
+                type: 'doughnut',
+                data: { labels: [], datasets: [{ data: [], backgroundColor: ['#22c55e','#06c4d4','#f59e0b','#ec4899','#8b5cf6','#3b82f6','#a3a3a3'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#9ca3af', font: { family: 'Cairo', size: 10 } } } } }
+            });
+            const ctx2 = document.getElementById('tradesLineChart').getContext('2d');
+            tradesLineChartInstance = new Chart(ctx2, {
+                type: 'bar',
+                data: { labels: ['عروض المخلفات','طلبات الخامات'], datasets: [{ label: 'عدد السجلات الحالية', data: [0,0], backgroundColor: ['rgba(34,197,94,.7)','rgba(6,182,212,.7)'], borderRadius: 8 }] },
+                options: { responsive: true, maintainAspectRatio: false, scales: { x: { ticks: { color: '#9ca3af' }, grid: { display:false } }, y: { beginAtZero:true, ticks: { color: '#9ca3af', precision:0 }, grid: { color: 'rgba(255,255,255,0.04)' } } }, plugins: { legend: { display: false } } }
+            });
+            updateChartsFromListings();
+        }
+
+        function updateChartsFromListings() {
+            if (!wastePieChartInstance || !tradesLineChartInstance) return;
+            const totals = {};
+            listings.filter(x => String(x.tradeType || '').includes('عرض')).forEach(x => { totals[x.category] = (totals[x.category] || 0) + Number(x.qty || 0); });
+            wastePieChartInstance.data.labels = Object.keys(totals);
+            wastePieChartInstance.data.datasets[0].data = Object.values(totals);
+            wastePieChartInstance.update();
+            const offers = listings.filter(x => String(x.tradeType || '').includes('عرض')).length;
+            const demands = listings.filter(x => String(x.tradeType || '').includes('طلب')).length;
+            tradesLineChartInstance.data.datasets[0].data = [offers, demands];
+            tradesLineChartInstance.update();
+        }
+
+    </script>
+\n<script>
+// Backend integration layer. Original layout and component structure are intentionally retained.
+const REGENESIS_API = (location.protocol === 'file:') ? 'http://127.0.0.1:8000/api' : '/api';
+async function rgApi(path, options={}) {
+  const headers = {...(options.headers || {})};
+  if (!(options.body instanceof FormData) && !headers['Content-Type']) headers['Content-Type']='application/json';
+  if (authToken) headers['Authorization']='Bearer '+authToken;
+  const response = await fetch(REGENESIS_API + path, {...options, headers});
+  if (!response.ok) { const detail = await response.text(); throw new Error(detail || `API ${response.status}`); }
+  return response.json();
+}
+async function rgLoadListings() {
+  try {
+    const data = await rgApi('/listings');
+    if (Array.isArray(data)) { listings = data; renderDashboardTable(); renderMarketplace(); }
+    try { const matchData = await rgApi('/matches'); matchEvents = Array.isArray(matchData) ? matchData : []; } catch(_) { matchEvents = []; }
+    renderMatchingEngine();
+    const h = await rgApi('/health');
+    let badge=document.getElementById('rg-api-status');
+    if(!badge){ badge=document.createElement('div'); badge.id='rg-api-status'; badge.className='fixed top-3 left-3 z-[90] text-[10px] font-bold px-3 py-1.5 rounded-full border border-brand-500/30 bg-dark-900/90 text-brand-400 shadow-lg'; document.body.appendChild(badge); }
+    let aiLabel='AI STATUS CHECK';
+    try {
+      const ai=await rgApi('/v1/advisor/status');
+      aiLabel=ai.chat_model_available ? ('CHAT MODEL READY · '+ai.chat_model) : (ai.ollama_reachable ? ('CHAT MODEL MISSING · '+ai.chat_model) : 'OLLAMA OFFLINE');
+      aiLabel += ai.vision_model_available ? ' · VISION MODEL READY' : ' · VISION MODEL MISSING';
+      const stateLabel=document.getElementById('rg-ai-state-label'); const stateDot=document.getElementById('rg-ai-state-dot');
+      if(stateLabel) stateLabel.textContent=ai.chat_model_available ? ('Chat model ready '+ai.chat_model+' · Vision '+(ai.vision_model_available?'ready':'not downloaded')) : (ai.ollama_reachable ? 'Ollama connected; chat model not downloaded' : 'Local AI offline');
+      if(stateDot) stateDot.className='w-1.5 h-1.5 rounded-full '+(ai.chat_model_available && ai.vision_model_available?'bg-brand-400 animate-pulse':'bg-amber-400');
+    } catch(_) { aiLabel='AI STATUS UNKNOWN'; }
+    badge.innerHTML='<i class="fa-solid fa-circle text-[7px] me-1"></i> API CONNECTED · '+h.listings+' RECORDS · '+rgEscapeHtml(aiLabel);
+  } catch(err) {
+    console.warn('ReGenesis API unavailable:',err);
+    let badge=document.getElementById('rg-api-status');
+    if(!badge){ badge=document.createElement('div'); badge.id='rg-api-status'; badge.className='fixed top-3 left-3 z-[90] text-[10px] font-bold px-3 py-1.5 rounded-full border border-amber-500/30 bg-dark-900/90 text-amber-300'; document.body.appendChild(badge); }
+    badge.textContent='DEMO MODE · START BACKEND TO SYNC';
+  }
+}
+window.previewWasteImages=function(input){
+  const el=document.getElementById('w-images-preview'); const files=Array.from(input.files||[]);
+  if(files.length>6){input.value='';el.textContent='الحد الأقصى 6 صور.';return;}
+  el.textContent=files.length?('تم اختيار '+files.length+' صورة: '+files.map(f=>f.name).join('، ')):'ارفع صوراً واضحة من زوايا مختلفة؛ لا تضع معلومات سرية داخل الصورة.';
+};
+window.handleWasteSubmit = async function(e) {
+  e.preventDefault();
+  if (!currentUser) { showToast(currentLang==='ar'?'يرجى تسجيل الدخول أولاً':'Please login first','info'); document.getElementById('auth-wall-overlay').classList.remove('hidden'); return; }
+  const btn=document.querySelector('#addWasteForm button[type="submit"]');
+  if(btn){btn.disabled=true;btn.classList.add('rg-loading');}
+  try {
+    let uploadedImages=[];
+    const selectedImages=Array.from(document.getElementById('w-images').files||[]);
+    if(selectedImages.length){
+      const fd=new FormData(); selectedImages.forEach(f=>fd.append('files',f));
+      const uploadResponse=await fetch(REGENESIS_API+'/uploads/waste-images',{method:'POST',headers:authToken?{'Authorization':'Bearer '+authToken}:{},body:fd});
+      if(!uploadResponse.ok) throw new Error(await uploadResponse.text());
+      uploadedImages=(await uploadResponse.json()).images||[];
+    }
+    const payload={
+      title:document.getElementById('w-title').value,
+      category:document.getElementById('w-category').value,
+      tradeType:document.getElementById('w-trade-type').value,
+      qty:parseFloat(document.getElementById('w-qty').value),
+      purity:parseFloat(document.getElementById('w-purity').value)||92,
+      price:parseFloat(document.getElementById('w-price').value)||50,
+      factory:currentUser.company,
+      city:document.getElementById('w-city').value||currentUser.city,
+      desc:document.getElementById('w-desc').value||'',
+      images:uploadedImages
+    };
+    const result=await rgApi('/listings',{method:'POST',body:JSON.stringify(payload)});
+    await rgLoadListings();
+    const modal=document.getElementById('match-modal'); const card=document.getElementById('match-modal-card');
+    const best=result.matches && result.matches[0];
+    card.innerHTML=`<div class="pb-3 border-b border-dark-800"><span class="text-xs text-gray-400">${currentLang==='ar'?'تم حفظ الإعلان وتحليل فرص المطابقة':'Listing saved and matching completed'}</span><h4 class="text-sm font-bold text-white mt-1">${rgEscapeHtml(result.listing.title)} · ${Number(result.listing.qty || 0)} ${currentLang==='ar'?'طن':'tons'}</h4></div>`+
+      (best?`<div class="mt-3 space-y-2 text-xs"><div class="flex justify-between"><b class="text-brand-400">${Number(best.score || 0).toFixed(1)}% Match</b><span class="text-gray-400">${rgEscapeHtml(best.listing.factory)}</span></div><p class="text-gray-300">${rgEscapeHtml(best.reason)}</p><p class="text-gray-400">${rgEscapeHtml(best.listing.title)} · ${Number(best.listing.qty || 0)} ${currentLang==='ar'?'طن':'tons'}</p></div>`:`<p class="text-sm text-gray-300 mt-3">${currentLang==='ar'?'تم حفظ الإعلان. لا توجد مطابقة قوية حالياً؛ ستظهر فرص جديدة عند تسجيل طلبات مناسبة.':'Saved. No strong match yet; new opportunities will appear as relevant demand is listed.'}</p>`);
+    modal.classList.remove('hidden'); document.getElementById('addWasteForm').reset();
+    showToast(currentLang==='ar'?'تم الحفظ في قاعدة البيانات بنجاح':'Saved to database successfully');
+  } catch(err) { console.error(err); showToast(currentLang==='ar'?'تعذر حفظ الإعلان أو رفع الصور: ':'Could not save listing or upload images: '+(err.message||''),'error'); }
+  finally { if(btn){btn.disabled=false;btn.classList.remove('rg-loading');} }
+};
+// Persistent chat history (browser-local; no conversation content is sent to third parties).
+const RG_CHAT_STORAGE='regenesis_ai_chat_v2';
+let rgChatHistory=[];
+try { rgChatHistory=JSON.parse(localStorage.getItem(RG_CHAT_STORAGE)||'[]').slice(-20); } catch(_) { rgChatHistory=[]; }
+function persistRgChat(){ try{localStorage.setItem(RG_CHAT_STORAGE,JSON.stringify(rgChatHistory.slice(-20)));}catch(_){} }
+window.previewChatImage=function(input){
+  const preview=document.getElementById('chat-image-preview');
+  if(input.files&&input.files[0]){ preview.textContent=(currentLang==='ar'?'الصورة جاهزة للتحليل: ':'Image ready: ')+input.files[0].name; preview.classList.remove('hidden'); }
+  else {preview.textContent='';preview.classList.add('hidden');}
+};
+function addChatBubble(role,text){
+  const box=document.getElementById('chat-messages-box'); const row=document.createElement('div');
+  row.className=role==='user'?'flex gap-2.5 items-start justify-end':'flex gap-2.5 items-start';
+  const bubble=document.createElement('div'); bubble.className=role==='user'?'bg-brand-500 text-dark-950 p-3 rounded-2xl font-bold text-xs max-w-[88%] whitespace-pre-wrap':'bg-dark-950 p-3 rounded-2xl border border-dark-800 text-gray-200 leading-relaxed max-w-[88%] text-[11px] whitespace-pre-wrap';
+  bubble.textContent=text; row.appendChild(bubble); box.appendChild(row); box.scrollTop=box.scrollHeight; return row;
+}
+window.handleChatSubmit = async function(e) {
+  e.preventDefault(); const input=document.getElementById('chat-user-input'); const question=input.value.trim();
+  const imageInput=document.getElementById('chat-image-input'); const file=imageInput.files&&imageInput.files[0];
+  if(!question&&!file)return;
+  const box=document.getElementById('chat-messages-box');
+  if(question){addChatBubble('user',question); rgChatHistory.push({role:'user',content:question});}
+  else addChatBubble('user',file.name+' · '+(currentLang==='ar'?'صورة مخلفات':'waste image'));
+  input.value='';
+  const wait=document.createElement('div'); wait.className='flex gap-2.5 items-start'; wait.innerHTML='<div class="w-7 h-7 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center"><i class="fa-solid fa-robot text-xs"></i></div><div class="rg-loading rounded-2xl p-4 w-44 h-12 text-[10px] text-brand-300">'+(currentLang==='ar'?'جاري التحليل...':'Analyzing...')+'</div>'; box.appendChild(wait); box.scrollTop=box.scrollHeight;
+  try {
+    let answer='';
+    if(file){
+      const fd=new FormData(); fd.append('file',file); fd.append('note',question);
+      const response=await fetch(REGENESIS_API.replace(/\/api$/, '')+'/api/v1/advisor/analyze-image',{method:'POST',headers:authToken?{'Authorization':'Bearer '+authToken}:{},body:fd});
+      if(!response.ok) throw new Error(await response.text());
+      const vision=await response.json(); answer='🖼️ '+(currentLang==='ar'?'نتيجة التحليل البصري الأولي':'Preliminary visual analysis')+'\n\n'+vision.analysis+'\n\n'+vision.disclaimer;
+      if(question) answer+='\n\n'+(currentLang==='ar'?'سؤالك: ':'Your question: ')+question;
+      rgChatHistory.push({role:'assistant',content:answer});
+      imageInput.value=''; document.getElementById('chat-image-preview').classList.add('hidden');
+    } else {
+      const agentIntent=/(مطابق|مشتري|مورد|مصنع|شراء|بيع|كربون|انبعاث|upcycl|match|buyer|supplier|co2|carbon|تدوير|تحويل|استفاد)/i.test(question);
+      if(agentIntent){
+        const result=await rgApi('/advisor',{method:'POST',body:JSON.stringify({message:question,history:rgChatHistory.slice(-10,-1)})});
+        answer=result.answer;
+      } else {
+        const response=await fetch(REGENESIS_API.replace(/\/api$/, '')+'/api/v1/advisor/stream',{method:'POST',headers:{'Content-Type':'application/json',...(authToken?{'Authorization':'Bearer '+authToken}:{})},body:JSON.stringify({message:question,history:rgChatHistory.slice(-10,-1)})});
+        if(!response.ok) throw new Error(await response.text());
+        const content=document.createElement('div'); content.className='bg-dark-950 p-3 rounded-2xl border border-dark-800 text-gray-200 leading-relaxed max-w-[88%]';
+        const p=document.createElement('p'); p.className='text-gray-300 text-[11px] whitespace-pre-line'; content.appendChild(p);
+        wait.innerHTML='<div class=\"w-7 h-7 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0\"><i class=\"fa-solid fa-robot text-xs\"></i></div>'; wait.appendChild(content);
+        const reader=response.body.getReader(); const decoder=new TextDecoder();
+        while(true){const part=await reader.read(); if(part.done)break; answer+=decoder.decode(part.value,{stream:true}); p.textContent=answer; box.scrollTop=box.scrollHeight;}
+      }
+      rgChatHistory.push({role:'assistant',content:answer});
+    }
+    persistRgChat();
+    const content=document.createElement('div'); content.className='bg-dark-950 p-3 rounded-2xl border border-dark-800 text-gray-200 leading-relaxed max-w-[88%]';
+    const p=document.createElement('p'); p.className='text-gray-300 text-[11px] whitespace-pre-line'; p.textContent=answer; content.appendChild(p);
+    wait.innerHTML='<div class="w-7 h-7 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0"><i class="fa-solid fa-robot text-xs"></i></div>'; wait.appendChild(content);
+  } catch(err) { const loading=wait.querySelector('.rg-loading'); loading.className='bg-dark-950 border border-amber-500/30 rounded-2xl p-3 text-xs text-amber-200'; loading.textContent=(currentLang==='ar'?'تعذر إكمال الطلب: ':'Request failed: ')+(err.message||'Backend unavailable'); }
+  box.scrollTop=box.scrollHeight;
+};
+window.addEventListener('load',()=>{
+  rgChatHistory.slice(-8).forEach(m=>addChatBubble(m.role,m.content));
+  rgLoadListings();
+});
+</script>
+
+<script>
+window.addEventListener('DOMContentLoaded', async () => {
+  if (!authToken) return;
+  try {
+    const response = await fetch(REGENESIS_API.replace(/\/api$/, '') + '/api/v1/auth/me', {headers:{'Authorization':'Bearer '+authToken}});
+    if (!response.ok) throw new Error('Session expired');
+    const user = await response.json();
+    if (currentUser) { currentUser.id=user.id; currentUser.fullname=user.full_name; currentUser.email=user.email; localStorage.setItem('regenesis_user_v3',JSON.stringify(currentUser)); }
+  } catch (_) {
+    authToken=null; currentUser=null; localStorage.removeItem('regenesis_token_v1'); localStorage.removeItem('regenesis_user_v3');
+    document.getElementById('auth-wall-overlay')?.classList.remove('hidden'); renderAuthHeader();
+  }
+});
+</script>
+</body>
+</html>
